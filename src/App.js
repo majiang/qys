@@ -1,81 +1,138 @@
 import React from 'react';
+import { connect, Provider } from 'react-redux';
+import { bindActionCreators, createStore } from 'redux';
 import logo from './logo.svg';
 import './App.css';
 
-function pile()
+const gameActionTypes = {
+  discard: 'discard',
+  draw: 'draw',
+  reset: 'reset',
+};
+const gameActions = {
+  discard: (position) => ({
+    type: gameActionTypes.discard,
+    position: position,
+  }),
+  draw: (pile, p) => ({
+    type: gameActionTypes.draw,
+    tile: pile[p],
+  }),
+  reset: (pile, handLength) => ({
+    type: gameActionTypes.reset,
+    handLength: handLength,
+    pile: pile,
+  }),
+}
+
+const nullGame = {
+  hand: [],
+  p: 0,
+  pile: [],
+};
+const gameReducer = (state = nullGame, action) => {
+  console.log(state);
+  console.log(action);
+  switch (action.type)
+  {
+    case gameActionTypes.discard:
+      return {
+        hand: discardTile(state.hand, action.position),
+        p: state.p,
+        pile: state.pile,
+      };
+    case gameActionTypes.draw:
+      return {
+        hand: drawTile(state.hand, action.tile),
+        p: state.p + 1,
+        pile: state.pile,
+      };
+    case gameActionTypes.reset:
+      return {
+        hand: dealHand(action.handLength, action.pile),
+        p: action.handLength,
+        pile: action.pile,
+      };
+    default:
+      //throw 'undefined action';
+  }
+};
+const gameStore = createStore(gameReducer);
+function discardTile(hand, position)
 {
-  return [
-      6, 5, 0, 7, 0, 8, 4, 7, 6,
-      4, 1, 1, 5, 4, 3, 8, 6, 1,
-      2, 1, 2, 8, 7, 3, 2, 2, 6,
-      3, 5, 8, 3, 4, 0, 5, 7, 0];
+  hand = hand.slice();
+  hand.splice(position, 1);
+  return hand;
+}
+function drawTile(hand, tile)
+{
+  hand = hand.slice();
+  hand.push(tile);
+  return hand;
+}
+function dealHand(length, pile)
+{
+  return pile.slice(0, length);
+}
+
+function shufflePile()
+{
+  let pile = [
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+  ];
+  let m = 36;
+  while (m)
+  {
+    const i = Math.floor(Math.random() * (m--));
+    [pile[i], pile[m]] = [pile[m], pile[i]];
+  }
+  return pile;
 }
 
 class Game extends React.Component
 {
-  constructor (props)
-  {
-    super (props);
-    this.state = {
-      hand: props.pile.slice(0, props.handLength),
-      handLength: props.handLength,
-      p: props.handLength,
-      pile: props.pile,
-    };
-    this.draw();
-  }
-  discard(i, r)
-  {
-    console.log("discard "+r+" at position "+i);
-    var hand = this.state.hand.slice();
-    var removed = hand.splice(i, 1);
-    this.setState({
-      hand: hand,
-      handLength: this.state.handLength,
-      p: this.state.p,
-      pile: this.state.pile,
-    });
-    setTimeout(()=>this.draw(), 1000);
-  }
-  draw()
-  {
-    console.log("draw: p="+this.state.p);
-    var hand = this.state.hand.slice();
-    hand.push(this.state.pile[this.state.p]);
-    this.setState({
-      hand: hand,
-      handLength: this.state.handLength,
-      p: this.state.p+1,
-      pile: this.state.pile,
-    });
-  }
   render()
   {
-    return <Hand ranks={this.state.hand} discard={(i, rank)=>this.discard(i, rank)} />
+    console.log(this);
+    return <>
+        <Hand ranks={this.props.hand} discard={this.props.actions.discard} />
+        <Controls reset={this.props.actions.reset} />
+    </>;
   }
 }
 
 class Hand extends React.Component
 {
-  constructor (props)
-  {
-    super (props);
-    this.state = {
-      ranks: props.ranks,
-      discard: props.discard
-    };
-  }
   renderTile(i, rank)
   {
-    return (<Tile index={i} rank={rank} onClick={()=>this.state.discard(i, rank)}/>);
+    return (<Tile index={i} rank={rank} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
-    return (<div className="hand">
-      {this.state.ranks.map((rank, i)=>this.renderTile(i, rank))}
+    console.log(this);
+    if (this.props.ranks) return (<div className="hand">
+      {this.props.ranks.map((rank, i)=>this.renderTile(i, rank))}
     </div>);
-    // even if we redefine renderTile(rank, i), (rank, i)=>this.renderTile(rank, i) is necessary.
-    // this.renderTile doesn't work. seems to forget this.
+    else return <></>;
+  }
+}
+class Controls extends React.Component
+{
+  render()
+  {
+    return <div className="controls">
+        {[1, 4, 7, 10, 13, 16].map((l) => <ResetButton length={l} onClick={()=>this.props.reset(shufflePile(), l)}/>)}
+    </div>;
+  }
+}
+class ResetButton extends React.Component
+{
+  render()
+  {
+    return <div className="resetButton" onClick={this.props.onClick}>{this.props.length}</div>;
   }
 }
 
@@ -87,11 +144,16 @@ class Tile extends React.Component
   }
 }
 
+const _Game = connect(
+    (storeState) => (storeState),
+    (dispatch) => ({actions: bindActionCreators(gameActions, dispatch)}),
+)(Game);
+
 function App() {
   return (
-    <div className="App">
-      <Game pile={pile()} handLength={4}/>
-    </div>
+    <Provider store={gameStore}>
+      <_Game />
+    </Provider>
   );
 }
 
