@@ -108,7 +108,7 @@ class Hand extends React.Component
 {
   renderTile(i, rank)
   {
-    return (<Tile index={i} rank={rank} onClick={()=>this.props.discard(i)}/>);
+    return (<Tile key={i} index={i} rank={rank} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
@@ -124,7 +124,7 @@ class Controls extends React.Component
   render()
   {
     return <div className="controls">
-        {[1, 4, 7, 10, 13, 16].map((l) => <ResetButton length={l} onClick={()=>this.props.reset(shufflePile(), l)}/>)}
+        {[1, 4, 7, 10, 13, 16].map((l) => <ResetButton key={l} length={l} onClick={()=>this.props.reset(shufflePile(), l)}/>)}
     </div>;
   }
 }
