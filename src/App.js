@@ -4,15 +4,30 @@ import './App.css';
 
 class Hand extends React.Component
 {
-  renderTile(i)
+  constructor (props)
   {
-    return <Tile index={i} rank="r" />;
+    super (props);
+    this.state = {
+      ranks: [1, 1, 1, 2]
+    };
+  }
+  discard(i)
+  {
+    console.log("discarded: "+i+": "+this.state.ranks[i]);
+  }
+  renderTile(rank, i)
+  {
+    return (<Tile index={i} rank={rank} onClick={()=>
+      this.discard(i)
+    }/>);
   }
   render()
   {
-    return (<div class="hand">
-      {[0, 1, 2, 3].map((i) => this.renderTile(i))}
+    return (<div className="hand">
+      {this.state.ranks.map((rank, i)=>this.renderTile(rank, i))}
     </div>);
+    // (rank, i)=>this.renderTile(rank, i) is necessary.
+    // this.renderTile doesn't work. seems to forget this.
   }
 }
 
@@ -20,7 +35,7 @@ class Tile extends React.Component
 {
   render()
   {
-  return (<div class="tile">{this.props.index}:{this.props.rank}</div>);
+    return (<div className="tile" onClick={this.props.onClick}>{this.props.index}:{this.props.rank}</div>);
   }
 }
 
