@@ -10,6 +10,7 @@ const gameActionTypes = {
   draw: 'draw',
   discardAndDraw: 'discardAndDraw',
   reset: 'reset',
+  resetAndDraw: 'resetAndDraw',
 };
 const gameActions = {
   discard: (position) => ({
@@ -26,10 +27,16 @@ const gameActions = {
     pile,
     position,
   }),
-  reset: (pile, handLength) => ({
+  reset: (pile, m) => ({
     type: gameActionTypes.reset,
-    handLength: handLength,
-    pile: pile,
+    m,
+    pile,
+  }),
+  resetAndDraw: (pile, m) => ({
+    type: gameActionTypes.resetAndDraw,
+    m,
+    p: m * 3 + 1,
+    pile,
   }),
 }
 const discardAndDrawLogic = createLogic({
@@ -43,8 +50,20 @@ const discardAndDrawLogic = createLogic({
     }, 1000);
   }
 });
+const resetAndDrawLogic = createLogic({
+  type: gameActionTypes.resetAndDraw,
+  process({ getState, action }, dispatch, done)
+  {
+    dispatch(gameActions.reset(action.pile, action.m));
+    setTimeout(() => {
+      dispatch(gameActions.draw(action.pile, action.p));
+      done();
+    }, 1000);
+  }
+});
 const nullGame = {
   hand: [],
+  m: 0,
   p: 0,
   pile: [],
 };
@@ -54,28 +73,26 @@ const gameReducer = (state = nullGame, action) => {
   switch (action.type)
   {
     case gameActionTypes.discard:
-      return {
+      return {...state,
         hand: discardTile(state.hand, action.position),
-        p: state.p,
-        pile: state.pile,
       };
     case gameActionTypes.draw:
-      return {
+      return {...state,
         hand: drawTile(state.hand, action.tile),
         p: state.p + 1,
-        pile: state.pile,
       };
     case gameActionTypes.reset:
       return {
-        hand: dealHand(action.handLength, action.pile),
-        p: action.handLength,
+        hand: dealHand(action.m * 3 + 1, action.pile),
+        m: action.m,
+        p: action.m * 3 + 1,
         pile: action.pile,
       };
     default:
       return state;
   }
 };
-const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([discardAndDrawLogic])));
+const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([discardAndDrawLogic, resetAndDrawLogic])));
 function discardTile(hand, position)
 {
   hand = hand.slice();
@@ -116,9 +133,9 @@ class Game extends React.Component
   {
     console.log(this);
     return <>
-        <Hand ranks={this.props.hand} discard={
+        <Hand ranks={this.props.hand} m={this.props.m} discard={
           (position)=>this.props.actions.discardAndDraw(this.props.p, this.props.pile, position)} />
-        <Controls reset={this.props.actions.reset} />
+        <Controls reset={(i)=>this.props.actions.resetAndDraw(shufflePile(), i)} />
     </>;
   }
 }
@@ -127,7 +144,7 @@ class Hand extends React.Component
 {
   renderTile(i, rank)
   {
-    return (<Tile key={i} index={i} rank={rank} onClick={()=>this.props.discard(i)}/>);
+    return (<Tile key={i} index={i} rank={rank} m={this.props.m} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
@@ -143,7 +160,8 @@ class Controls extends React.Component
   render()
   {
     return <div className="controls">
-        {[1, 4, 7, 10, 13, 16].map((l) => <ResetButton key={l} length={l} onClick={()=>this.props.reset(shufflePile(), l)}/>)}
+        {[1, 4, 7, 10, 13, 16].map((l, i) =>
+            <ResetButton key={i} length={l} onClick={()=>this.props.reset(i)}/>)}
     </div>;
   }
 }
@@ -159,7 +177,10 @@ class Tile extends React.Component
 {
   render()
   {
-    return (<div className="tile" onClick={this.props.onClick}>{this.props.index}:{this.props.rank}</div>);
+    return (<div className={"tile m"+this.props.m} onClick={this.props.onClick}>
+        <span className="tile-index">{this.props.index}:</span>
+        <span className="tile-value">{this.props.rank+1}</span>
+    </div>);
   }
 }
 
