@@ -1,12 +1,14 @@
 import React from 'react';
 import { connect, Provider } from 'react-redux';
-import { bindActionCreators, createStore } from 'redux';
+import { applyMiddleware, bindActionCreators, createStore } from 'redux';
+import { createLogic, createLogicMiddleware } from 'redux-logic';
 import logo from './logo.svg';
 import './App.css';
 
 const gameActionTypes = {
   discard: 'discard',
   draw: 'draw',
+  discardAndDraw: 'discardAndDraw',
   reset: 'reset',
 };
 const gameActions = {
@@ -18,13 +20,29 @@ const gameActions = {
     type: gameActionTypes.draw,
     tile: pile[p],
   }),
+  discardAndDraw: (p, pile, position) => ({
+    type: gameActionTypes.discardAndDraw,
+    p,
+    pile,
+    position,
+  }),
   reset: (pile, handLength) => ({
     type: gameActionTypes.reset,
     handLength: handLength,
     pile: pile,
   }),
 }
-
+const discardAndDrawLogic = createLogic({
+  type: gameActionTypes.discardAndDraw,
+  process({ getState, action }, dispatch, done)
+  {
+    dispatch(gameActions.discard(action.position));
+    setTimeout(() => {
+      dispatch(gameActions.draw(action.pile, action.p));
+      done();
+    }, 1000);
+  }
+});
 const nullGame = {
   hand: [],
   p: 0,
@@ -54,10 +72,10 @@ const gameReducer = (state = nullGame, action) => {
         pile: action.pile,
       };
     default:
-      //throw 'undefined action';
+      return state;
   }
 };
-const gameStore = createStore(gameReducer);
+const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([discardAndDrawLogic])));
 function discardTile(hand, position)
 {
   hand = hand.slice();
@@ -98,7 +116,8 @@ class Game extends React.Component
   {
     console.log(this);
     return <>
-        <Hand ranks={this.props.hand} discard={this.props.actions.discard} />
+        <Hand ranks={this.props.hand} discard={
+          (position)=>this.props.actions.discardAndDraw(this.props.p, this.props.pile, position)} />
         <Controls reset={this.props.actions.reset} />
     </>;
   }
