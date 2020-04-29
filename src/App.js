@@ -144,7 +144,7 @@ class Hand extends React.Component
 {
   renderTile(i, rank)
   {
-    return (<Tile key={i} index={i} rank={rank} m={this.props.m} onClick={()=>this.props.discard(i)}/>);
+    return (<PostModernDots key={i} index={i} rank={rank} m={this.props.m} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
@@ -177,11 +177,52 @@ class Tile extends React.Component
 {
   render()
   {
-    return (<div className={"tile m"+this.props.m} onClick={this.props.onClick}>
-        <span className="tile-index">{this.props.index}:</span>
-        <span className="tile-value">{this.props.rank+1}</span>
-    </div>);
+    return <div className="tile" onClick={this.props.onClick}><img src={this.imageUrl()} style={this.generateStyle(this.props.rank)} /></div>
   }
+  imageUrl()
+  {
+    throw new TypeError("imageUrl() is not implemented");
+  }
+  generateStyle(r)
+  {
+    return {
+        clip: `rect(${this.top(r)}, ${this.right(r)}, ${this.bottom(r)}, ${this.left(r)})`,
+        top: -this.top(r),
+        left: -this.left(r),
+    };
+  }
+  top(r){throw new TypeError("top() is not implemented");}
+  right(r){throw new TypeError("right() is not implemented");}
+  bottom(r){throw new TypeError("bottom() is not implemented");}
+  left(r){throw new TypeError("left() is not implemented");}
+}
+
+class PostModernTile extends Tile
+{
+  top(r){return 0;}
+  bottom(r){return 88;}
+  imageUrl()
+  {
+    return "postmodern.svg";
+  }
+}
+
+class PostModernBamboos extends PostModernTile
+{
+  left(r){return (24+r)*64;}
+  right(r){return (25+r)*64;}
+}
+
+class PostModernCharacters extends PostModernTile
+{
+  left(r){return (15+r)*64;}
+  right(r){return (16+r)*64;}
+}
+
+class PostModernDots extends PostModernTile
+{
+  left(r){return (0+r)*64;}
+  right(r){return (1+r)*64;}
 }
 
 const _Game = connect(

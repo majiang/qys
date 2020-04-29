@@ -12,11 +12,24 @@ code {
     monospace;
 }
 
-.tile
+@font-face
 {
-  display: inline-block;
-  box-sizing: border-box;
-  border: 1px solid gray;
+  font-family: 'GL-MahjongTile-Clr';
+  src: url('/GL-MahjongTile-Clr.woff2') format('woff2');
+}
+
+div.tile
+{
+    position: relative;
+    overflow: hidden;
+    width: 64px;
+    height: 88px;
+    display: inline-block;
+}
+div.tile > img
+{
+  position: absolute;
+  object-fit: contain;
 }
 .tile.m0
 {
@@ -44,11 +57,35 @@ code {
 }
 .tile .tile-index
 {
+  display: none;
   color: gray;
   font-size: smaller;
 }
 .tile .tile-value
 {
-  font-weight: bold;
-  font-size: larger;
+  font-family: 'GL-MahjongTile-Clr';
+}
+.tile.m0 .tile-value
+{
+  font-size: 76vw;
+}
+.tile.m1 .tile-value
+{
+  font-size: 31vw;
+}
+.tile.m2 .tile-value
+{
+  font-size: 18vw;
+}
+.tile.m3 .tile-value
+{
+  font-size: 12vw;
+}
+.tile.m4 .tile-value
+{
+  font-size: 11vw;
+}
+.tile.m5 .tile-value
+{
+  font-size: 8vw;
 }
