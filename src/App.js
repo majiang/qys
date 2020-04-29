@@ -112,13 +112,8 @@ function dealHand(length, pile)
 
 function shufflePile()
 {
-  let pile = [
-      0, 1, 2, 3, 4, 5, 6, 7, 8,
-      0, 1, 2, 3, 4, 5, 6, 7, 8,
-      0, 1, 2, 3, 4, 5, 6, 7, 8,
-      0, 1, 2, 3, 4, 5, 6, 7, 8,
-  ];
   let m = 36;
+  let pile = Array.from(Array(m).keys());
   while (m)
   {
     const i = Math.floor(Math.random() * (m--));
@@ -133,7 +128,7 @@ class Game extends React.Component
   {
     console.log(this);
     return <>
-        <Hand ranks={this.props.hand} m={this.props.m} discard={
+        <Hand tileClass={PostModernDots} tiles={this.props.hand} m={this.props.m} discard={
           (position)=>this.props.actions.discardAndDraw(this.props.p, this.props.pile, position)} />
         <Controls reset={(i)=>this.props.actions.resetAndDraw(shufflePile(), i)} />
     </>;
@@ -142,15 +137,15 @@ class Game extends React.Component
 
 class Hand extends React.Component
 {
-  renderTile(i, rank)
+  renderTile(i, tile)
   {
-    return (<PostModernDots key={i} index={i} rank={rank} m={this.props.m} onClick={()=>this.props.discard(i)}/>);
+    return (<this.props.tileClass key={tile} index={i} rank={tile % 9} m={this.props.m} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
     console.log(this);
-    if (this.props.ranks) return (<div className="hand">
-      {this.props.ranks.map((rank, i)=>this.renderTile(i, rank))}
+    if (this.props.tiles) return (<div className="hand">
+      {this.props.tiles.map((tile, i)=>this.renderTile(i, tile))}
     </div>);
     else return <></>;
   }
