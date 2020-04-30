@@ -49,6 +49,7 @@ export class Game extends React.Component
         case 'bamboos': return PostModernBamboos;
         case 'characters': return PostModernCharacters;
         case 'dots': return PostModernDots;
+        default: throw new RangeError('suit not supported')
       }
     }
     else throw new RangeError('PostModern is the only currently supported tileStyle');
@@ -84,140 +85,15 @@ class Hand extends React.Component
     else return <></>;
   }
 }
-class Controls extends React.Component
-{
-  render()
-  {
-    return <form className="controls">
-      <StartButton onClick={this.props.reset} />
-      <fieldset className="hand-length">
-        <span className="radio-label">#tiles</span>
-        {[1, 4, 7, 10, 13, 16].map((v, i) =>
-        <HandLengthRadio key={i} value={v} onChange={this.props.handLength.handler} />)}
-      </fieldset>
-      <fieldset className="tile-style">
-        <span className="radio-label">tile style</span>
-        {["PostModern"].map((v, i) =>
-        <TileStyleRadio key={i} value={v} onChange={this.props.tileStyle.handler} />)}
-      </fieldset>
-      <fieldset className="tile-suit">
-        <span className="radio-label">suit</span>
-        {[
-          {display: "bams/索/条", value: "bamboos"},
-          {display: "chars/萬/万", value: "characters"},
-          {display: "dots/筒/饼", value: "dots"}].map((v, i) =>
-        <TileSuitRadio key={i} value={v} onChange={this.props.tileSuit.handler} />)}
-      </fieldset>
-      <fieldset className="allow-pairs">
-        <span className="radio-label">pairs</span>
-        {[
-          {display: "disallow", value: "disallow"},
-          {display: "allow", value: "allow"},
-          {display: "tile hog", value: "allow-hog"},
-        ].map((v, i) =>
-        <AllowPairsRadio key={i} value={v} onChange={this.props.allowPairs.handler} />)}
-      </fieldset>
-      <fieldset><TimeBeforeDraw io={this.props.timeBeforeDraw} /></fieldset>
-      <fieldset><TimeBeforeSort io={this.props.timeBeforeSort} /></fieldset>
-    </form>;
-  }
-}
-class HandLengthRadio extends React.Component
-{
-  render()
-  {
-    return <><input type="radio" name="hand-length"
-        id={`hand-length-${this.props.value}`}
-        value={this.props.value}
-        onChange={this.props.onChange}
-        defaultChecked={this.props.value===13} />
-      <label htmlFor={`hand-length-${this.props.value}`}>
-        {formatDigits(this.props.value, 2)}
-      </label></>;
-  }
-}
-class TileStyleRadio extends React.Component
-{
-  render()
-  {
-    return <><input type="radio" name="tile-style"
-        id={`tile-style-${this.props.value}`}
-        value={this.props.value.value}
-        onChange={this.props.onChange}
-        defaultChecked={this.props.value==="PostModern"} />
-      <label htmlFor={`tile-style-${this.props.value}`}>
-        {this.props.value}
-      </label></>;
-  }
-}
-class TileSuitRadio extends React.Component
-{
-  render()
-  {
-    return <><input type="radio" name="tile-suit"
-        id={`tile-suit-${this.props.value.value}`}
-        value={this.props.value.value}
-        onChange={this.props.onChange}
-        defaultChecked={this.props.value.value==="dots"} />
-      <label htmlFor={`tile-suit-${this.props.value.value}`}>
-        {this.props.value.display}
-      </label></>;
-  }
-}
-class AllowPairsRadio extends React.Component
-{
-  render()
-  {
-    return <>
-      <input type="radio" name="allow-pairs"
-        id={`allow-pairs-${this.props.value.value}`}
-        value={this.props.value.value}
-        onChange={this.props.onChange}
-        defaultChecked={this.props.value.value==="allow"} />
-      <label htmlFor={`allow-pairs-${this.props.value.value}`}>
-        {this.props.value.display}
-      </label></>;
-  }
-}
-class TimeBeforeDraw extends React.Component
-{
-  render()
-  {
-    return <>
-      <label htmlFor="time-before-draw">time before draw</label>
-      <input type="range" id="time-before-draw" name="time-before-draw"
-          min="100" max="9900" step="100" defaultValue="1000"
-          ref={this.props.io.ref} onChange={this.props.io.handler} />
-      <output htmlFor="time-before-draw">{(this.props.io.value/1000).toFixed(1)}s</output>
-    </>;
-  }
-}
-class TimeBeforeSort extends React.Component
-{
-  render()
-  {
-    return <>
-      <label htmlFor="time-before-sort">time before sort</label>
-      <input type="range" id="time-before-sort" name="time-before-sort"
-          min="0" max="9900" step="100" defaultValue="500"
-          ref={this.props.io.ref} onChange={this.props.io.handler} />
-      <output htmlFor="time-before-sort">{(this.props.io.value/1000).toFixed(1)}s</output>
-    </>;
-  }
-}
-class StartButton extends React.Component
-{
-  render()
-  {
-    return <div className="start-button" onClick={this.props.onClick}>start</div>;
-  }
-}
 
 class Tile extends React.Component
 {
   render()
   {
-    return <div className="tile" onClick={this.props.onClick}><img src={this.imageUrl()} style={this.generateStyle(this.props.rank)} /></div>
+    return <div className="tile" onClick={this.props.onClick}>
+      <img src={this.imageUrl()}
+      style={this.generateStyle(this.props.rank)}
+      alt={this.props.rank+1}/></div>
   }
   imageUrl()
   {
@@ -263,6 +139,104 @@ class PostModernDots extends PostModernTile
 {
   left(r){return (0+r)*64;}
   right(r){return (1+r)*64;}
+}
+
+class Controls extends React.Component
+{
+  render()
+  {
+    return <form className="controls">
+      <StartButton onClick={this.props.reset} />
+      <fieldset className="hand-length">
+        <span className="radio-label">#tiles</span>
+        {[1, 4, 7, 10, 13, 16].map((v, i) =>
+        <Radio name="hand-length" key={i}
+          display={formatDigits(v, 2)}
+          value={v} defaultValue={13}
+          onChange={this.props.handLength.handler} />)}
+      </fieldset>
+      <fieldset className="tile-style">
+        <span className="radio-label">tile style</span>
+        {["PostModern"].map((v, i) =>
+        <Radio name="tile-style" key={i}
+          display={v}
+          value={v} defaultValue="PostModern"
+          onChange={this.props.tileStyle.handler} />)}
+      </fieldset>
+      <fieldset className="tile-suit">
+        <span className="radio-label">suit</span>
+        {[
+          {display: "bams/索/条", value: "bamboos"},
+          {display: "chars/萬/万", value: "characters"},
+          {display: "dots/筒/饼", value: "dots"}].map((v, i) =>
+        <Radio name="tile-suit" key={i}
+          display={v.display}
+          value={v.value} defaultValue="dots"
+          onChange={this.props.tileSuit.handler} />)}
+      </fieldset>
+      <fieldset className="allow-pairs">
+        <span className="radio-label">pairs</span>
+        {[
+          {display: "disallow", value: "disallow"},
+          {display: "allow", value: "allow"},
+          {display: "tile hog", value: "allow-hog"},
+        ].map((v, i) =>
+        <Radio name="allow-pairs" key={i}
+          display={v.display}
+          value={v.value} defaultValue="allow"
+          onChange={this.props.allowPairs.handler} />)}
+      </fieldset>
+      <fieldset><TimeBeforeDraw io={this.props.timeBeforeDraw} /></fieldset>
+      <fieldset><TimeBeforeSort io={this.props.timeBeforeSort} /></fieldset>
+    </form>;
+  }
+}
+class Radio extends React.Component
+{
+  render()
+  {
+    return <><input type="radio" name={this.props.name}
+        id={`${this.props.name}-${this.props.value}`}
+        value={this.props.value}
+        onChange={this.props.onChange}
+        defaultChecked={this.props.value===this.props.defaultValue} />
+      <label htmlFor={`${this.props.name}-${this.props.value}`}>
+        {this.props.display}
+      </label></>;
+  }
+}
+class TimeBeforeDraw extends React.Component
+{
+  render()
+  {
+    return <>
+      <label htmlFor="time-before-draw">time before draw</label>
+      <input type="range" id="time-before-draw" name="time-before-draw"
+          min="100" max="9900" step="100" defaultValue="1000"
+          ref={this.props.io.ref} onChange={this.props.io.handler} />
+      <output htmlFor="time-before-draw">{(this.props.io.value/1000).toFixed(1)}s</output>
+    </>;
+  }
+}
+class TimeBeforeSort extends React.Component
+{
+  render()
+  {
+    return <>
+      <label htmlFor="time-before-sort">time before sort</label>
+      <input type="range" id="time-before-sort" name="time-before-sort"
+          min="0" max="9900" step="100" defaultValue="500"
+          ref={this.props.io.ref} onChange={this.props.io.handler} />
+      <output htmlFor="time-before-sort">{(this.props.io.value/1000).toFixed(1)}s</output>
+    </>;
+  }
+}
+class StartButton extends React.Component
+{
+  render()
+  {
+    return <div className="start-button" onClick={this.props.onClick}>start</div>;
+  }
 }
 
 function formatDigits(n, d)
