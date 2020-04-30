@@ -186,8 +186,28 @@ class Controls extends React.Component
           value={v.value} defaultValue="allow"
           onChange={this.props.allowPairs.handler} />)}
       </fieldset>
-      <fieldset><TimeBeforeDraw io={this.props.timeBeforeDraw} /></fieldset>
-      <fieldset><TimeBeforeSort io={this.props.timeBeforeSort} /></fieldset>
+      <fieldset><Range
+        id="time-before-draw"
+        label="time before draw"
+        handler={this.props.timeBeforeDraw.handler}
+        value={{
+          min: 100,
+          max: 9900,
+          step: 100,
+          default: 1000,
+          display: (this.props.timeBeforeDraw.value/1000).toFixed(1)+"s",
+        }} /></fieldset>
+      <fieldset><Range
+        id="time-before-sort"
+        label="time before sort"
+        handler={this.props.timeBeforeSort.handler}
+        value={{
+          min: 0,
+          max: 9900,
+          step: 100,
+          default: 500,
+          display: (this.props.timeBeforeSort.value/1000).toFixed(1)+"s",
+        }} /></fieldset>
     </form>;
   }
 }
@@ -205,29 +225,18 @@ class Radio extends React.Component
       </label></>;
   }
 }
-class TimeBeforeDraw extends React.Component
+class Range extends React.Component
 {
   render()
   {
+    const value = this.props.value;
+    const id = this.props.id;
     return <>
-      <label htmlFor="time-before-draw">time before draw</label>
-      <input type="range" id="time-before-draw" name="time-before-draw"
-          min="100" max="9900" step="100" defaultValue="1000"
-          ref={this.props.io.ref} onChange={this.props.io.handler} />
-      <output htmlFor="time-before-draw">{(this.props.io.value/1000).toFixed(1)}s</output>
-    </>;
-  }
-}
-class TimeBeforeSort extends React.Component
-{
-  render()
-  {
-    return <>
-      <label htmlFor="time-before-sort">time before sort</label>
-      <input type="range" id="time-before-sort" name="time-before-sort"
-          min="0" max="9900" step="100" defaultValue="500"
-          ref={this.props.io.ref} onChange={this.props.io.handler} />
-      <output htmlFor="time-before-sort">{(this.props.io.value/1000).toFixed(1)}s</output>
+      <label htmlFor={id}>{this.props.label}</label>
+      <input type="range" id={id} name={id}
+        min={value.min} max={value.max} step={value.step} defaultValue={value.default}
+        onChange={this.props.handler} />
+      <output htmlFor={id}>{value.display}</output>
     </>;
   }
 }
