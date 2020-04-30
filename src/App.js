@@ -17,7 +17,7 @@ function shufflePile()
   return pile;
 }
 
-const _Game = connect(
+const ConnectedGame = connect(
     (storeState) => (storeState),
     (dispatch) => ({actions: bindActionCreators(gameActions, dispatch)}),
 )(Game);
@@ -25,7 +25,7 @@ const _Game = connect(
 function App() {
   return (
     <Provider store={gameStore}>
-      <_Game initializer={shufflePile} />
+      <ConnectedGame initializer={shufflePile} />
     </Provider>
   );
 }
