@@ -161,52 +161,48 @@ class Controls extends React.Component
   {
     return <fieldset className="hand-length">
         <span className="radio-label">#tiles</span>
-        {[1, 4, 7, 10, 13, 16].map((v, i) =>
-          <Radio name="hand-length" key={i}
-            display={formatDigits(v, 2)}
-            value={v} defaultValue={13}
-            onChange={this.props.handLength.handler} />)}
+        <Radios choices={[1, 4, 7, 10, 13, 16].map((v) =>
+          ({display: formatDigits(v, 2), value: v}))}
+          name="hand-length"
+          defaultValue={13}
+          onChange={this.props.handLength.handler} />
         </fieldset>;
   }
   renderTileStyle()
   {
     return <fieldset className="tile-style">
         <span className="radio-label">tile style</span>
-        {["PostModern"].map((v, i) =>
-          <Radio name="tile-style" key={i}
-            display={v}
-            value={v} defaultValue="PostModern"
-            onChange={this.props.tileStyle.handler} />)}
+        <Radios choices={[
+          {display: "PostModern", value: "PostModern"}]}
+          name="tile-style"
+          defaultValue="PostModern"
+          onChange={this.props.tileStyle.handler} />
         </fieldset>;
   }
   renderTileSuit()
   {
     return <fieldset className="tile-suit">
         <span className="radio-label">suit</span>
-        {[
+        <Radios choices={[
           {display: "bams/索/条", value: "bamboos"},
           {display: "chars/萬/万", value: "characters"},
-          {display: "dots/筒/饼", value: "dots"}
-        ].map((v, i) =>
-          <Radio name="tile-suit" key={i}
-            display={v.display}
-            value={v.value} defaultValue="dots"
-            onChange={this.props.tileSuit.handler} />)}
+          {display: "dots/筒/饼", value: "dots"}]}
+          name="tile-suit"
+          defaultValue="dots"
+          onChange={this.props.tileSuit.handler} />
         </fieldset>;
   }
   renderAllowPairs()
   {
     return <fieldset className="allow-pairs">
         <span className="radio-label">pairs</span>
-        {[
+        <Radios choices={[
           {display: "disallow", value: "disallow"},
           {display: "allow", value: "allow"},
-          {display: "tile hog", value: "allow-hog"},
-        ].map((v, i) =>
-        <Radio name="allow-pairs" key={i}
-          display={v.display}
-          value={v.value} defaultValue="allow"
-          onChange={this.props.allowPairs.handler} />)}
+          {display: "tile hog", value: "allow-hog"}]}
+          name="allow-pairs"
+          defaultValue="allow"
+          onChange={this.props.allowPairs.handler} />
         </fieldset>;
   }
   renderTimeBeforeDraw()
@@ -248,6 +244,20 @@ class Controls extends React.Component
         {this.renderTimeBeforeDraw()}
         {this.renderTimeBeforeSort()}
     </form>;
+  }
+}
+class Radios extends React.Component
+{
+  render()
+  {
+    return <>{this.props.choices.map((v, i) => <Radio
+        key={i}
+        name={this.props.name}
+        value={v.value}
+        display={v.display}
+        onChange={this.props.onChange}
+        defaultValue={this.props.defaultValue}
+    />)}</>;
   }
 }
 class Radio extends React.Component
