@@ -153,38 +153,50 @@ class PostModernDots extends PostModernTile
 
 class Controls extends React.Component
 {
-  render()
+  renderStartButton()
   {
-    return <form className="controls">
-      <StartButton onClick={this.props.reset} />
-      <fieldset className="hand-length">
+    return <StartButton onClick={this.props.reset} />;
+  }
+  renderHandLength()
+  {
+    return <fieldset className="hand-length">
         <span className="radio-label">#tiles</span>
         {[1, 4, 7, 10, 13, 16].map((v, i) =>
-        <Radio name="hand-length" key={i}
-          display={formatDigits(v, 2)}
-          value={v} defaultValue={13}
-          onChange={this.props.handLength.handler} />)}
-      </fieldset>
-      <fieldset className="tile-style">
+          <Radio name="hand-length" key={i}
+            display={formatDigits(v, 2)}
+            value={v} defaultValue={13}
+            onChange={this.props.handLength.handler} />)}
+        </fieldset>;
+  }
+  renderTileStyle()
+  {
+    return <fieldset className="tile-style">
         <span className="radio-label">tile style</span>
         {["PostModern"].map((v, i) =>
-        <Radio name="tile-style" key={i}
-          display={v}
-          value={v} defaultValue="PostModern"
-          onChange={this.props.tileStyle.handler} />)}
-      </fieldset>
-      <fieldset className="tile-suit">
+          <Radio name="tile-style" key={i}
+            display={v}
+            value={v} defaultValue="PostModern"
+            onChange={this.props.tileStyle.handler} />)}
+        </fieldset>;
+  }
+  renderTileSuit()
+  {
+    return <fieldset className="tile-suit">
         <span className="radio-label">suit</span>
         {[
           {display: "bams/索/条", value: "bamboos"},
           {display: "chars/萬/万", value: "characters"},
-          {display: "dots/筒/饼", value: "dots"}].map((v, i) =>
-        <Radio name="tile-suit" key={i}
-          display={v.display}
-          value={v.value} defaultValue="dots"
-          onChange={this.props.tileSuit.handler} />)}
-      </fieldset>
-      <fieldset className="allow-pairs">
+          {display: "dots/筒/饼", value: "dots"}
+        ].map((v, i) =>
+          <Radio name="tile-suit" key={i}
+            display={v.display}
+            value={v.value} defaultValue="dots"
+            onChange={this.props.tileSuit.handler} />)}
+        </fieldset>;
+  }
+  renderAllowPairs()
+  {
+    return <fieldset className="allow-pairs">
         <span className="radio-label">pairs</span>
         {[
           {display: "disallow", value: "disallow"},
@@ -195,8 +207,11 @@ class Controls extends React.Component
           display={v.display}
           value={v.value} defaultValue="allow"
           onChange={this.props.allowPairs.handler} />)}
-      </fieldset>
-      <fieldset><Range
+        </fieldset>;
+  }
+  renderTimeBeforeDraw()
+  {
+    return <fieldset><Range
         id="time-before-draw"
         label="time before draw"
         handler={this.props.timeBeforeDraw.handler}
@@ -206,8 +221,11 @@ class Controls extends React.Component
           step: 100,
           default: 1000,
           display: (this.props.timeBeforeDraw.value/1000).toFixed(1)+"s",
-        }} /></fieldset>
-      <fieldset><Range
+        }} /></fieldset>;
+  }
+  renderTimeBeforeSort()
+  {
+    return <fieldset><Range
         id="time-before-sort"
         label="time before sort"
         handler={this.props.timeBeforeSort.handler}
@@ -218,6 +236,17 @@ class Controls extends React.Component
           default: 500,
           display: (this.props.timeBeforeSort.value/1000).toFixed(1)+"s",
         }} /></fieldset>
+  }
+  render()
+  {
+    return <form className="controls">
+        {this.renderStartButton()}
+        {this.renderHandLength()}
+        {this.renderTileStyle()}
+        {this.renderTileSuit()}
+        {this.renderAllowPairs()}
+        {this.renderTimeBeforeDraw()}
+        {this.renderTimeBeforeSort()}
     </form>;
   }
 }
