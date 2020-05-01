@@ -3,6 +3,7 @@ import { Dispatch, Done} from 'redux-logic-helper';
 import { applyMiddleware, createStore } from 'redux';
 import { actionCreatorFactory, isType } from 'typescript-fsa';
 import { reducerWithInitialState } from 'typescript-fsa-reducers';
+import { Hand, Pile, Tile } from './gamecommon';
 const actionCreator = actionCreatorFactory();
 
 export const gameActions = {
@@ -67,9 +68,6 @@ const sortAndDrawLogic = createLogic({
     }, action.payload.timeBetweenSortDraw);
   }
 });
-export type Hand = Array<number>;
-export type Pile = Array<number>;
-export type Tile = number;
 type GameState = {
   hand: Hand,
   p: number,

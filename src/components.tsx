@@ -1,12 +1,12 @@
 import React from 'react';
-import * as gamelogics from './gamelogics';
+import * as gamecommon from './gamecommon';
 
 type GameProps =
 {
   initializer: ()=>Array<number>,
-  hand: gamelogics.Hand,
+  hand: gamecommon.Hand,
   p: number,
-  pile: gamelogics.Pile,
+  pile: gamecommon.Pile,
   actions: any,
 };
 type GameState =
@@ -102,13 +102,13 @@ export class Game extends React.Component<GameProps, GameState>
 
 type HandProps =
 {
-  tiles: gamelogics.Hand,
+  tiles: gamecommon.Hand,
   tileClass: React.ComponentClass<TileProps>,
   discard: (position: number) => void,
 };
 class Hand extends React.Component<HandProps>
 {
-  renderTile(i: number, tile: gamelogics.Tile)
+  renderTile(i: number, tile: gamecommon.Tile)
   {
     return (<this.props.tileClass key={tile} rank={~~(tile/4)} onClick={()=>this.props.discard(i)}/>);
   }
