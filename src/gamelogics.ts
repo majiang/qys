@@ -4,12 +4,14 @@ import { applyMiddleware, createStore } from 'redux';
 import { actionCreatorFactory, isType } from 'typescript-fsa';
 import { reducerWithInitialState } from 'typescript-fsa-reducers';
 import { Hand, Pile, Tile } from './gamecommon';
+import { isNormalHu, fromTiles } from './hu';
 const actionCreator = actionCreatorFactory();
 
 export const gameActions = {
   discard: actionCreator<{position: number}>('discard'),
   draw: actionCreator<{tile: Tile}>('draw'),
   discardAndDraw: actionCreator<{p: number, pile: Pile, position: number, timeBeforeDraw: number, timeBeforeSort: number}>('discardAndDraw'),
+  declareHu: actionCreator<{hand: Hand}>('declareHu'),
   reset: actionCreator<{pile: Pile, p: number}>('reset'),
   resetAndDraw: actionCreator<{pile: Pile, p: number, timeBeforeDraw: number, timeBeforeSort: number}>('resetAndDraw'),
   sort: actionCreator<void>('sort'),
@@ -93,7 +95,11 @@ const gameReducer = reducerWithInitialState(nullGame)
 }))
 .case(gameActions.sort, (state, payload) => ({...state,
   hand: sortHand(state.hand),
-}));
+}))
+.case(gameActions.declareHu, (state, payload) => ({...state,
+  hand: isNormalHu(fromTiles(payload.hand)) ? [0, 1, 2, 3] : [0, 8, 16, 24, 32],
+}))
+;
 export const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([
     discardAndDrawLogic,
     resetAndDrawLogic,

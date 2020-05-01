@@ -84,6 +84,9 @@ export class Game extends React.Component<GameProps, GameState>
             timeBeforeDraw: this.state.timeBeforeDraw,
             timeBeforeSort: this.state.timeBeforeSort})} />
         <Controls
+          hu={()=>this.props.actions.declareHu({
+            hand: this.props.hand
+          })}
           reset={()=>this.props.actions.resetAndDraw({
             pile: this.props.initializer(),
             p: this.state.handLength,
@@ -110,14 +113,13 @@ class Hand extends React.Component<HandProps>
 {
   renderTile(i: number, tile: gamecommon.Tile)
   {
-    return (<this.props.tileClass key={tile} rank={~~(tile/4)} onClick={()=>this.props.discard(i)}/>);
+    return (<this.props.tileClass key={tile} rank={gamecommon.rank(tile)} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
-    if (this.props.tiles) return (<div className="hand">
-      {this.props.tiles.map((tile, i)=>this.renderTile(i, tile))}
-    </div>);
-    else return <></>;
+    return <div className="hand">
+        {this.props.tiles.map((tile, i)=>this.renderTile(i, tile))}
+        </div>;
   }
 }
 
@@ -194,6 +196,7 @@ type HasHandlerAndValue =
 type ControlsProps =
 {
   reset: () => void,
+  hu: () => void,
   handLength: HasHandler,
   tileStyle: HasHandler,
   tileSuit: HasHandler,
@@ -204,6 +207,10 @@ type ControlsProps =
 
 class Controls extends React.Component<ControlsProps>
 {
+  renderHuButton()
+  {
+    return <HuButton onClick={this.props.hu} />;
+  }
   renderStartButton()
   {
     return <StartButton onClick={this.props.reset} />;
@@ -287,6 +294,7 @@ class Controls extends React.Component<ControlsProps>
   render()
   {
     return <form className="controls">
+        {this.renderHuButton()}
         {this.renderStartButton()}
         {this.renderHandLength()}
         {this.renderTileStyle()}
@@ -373,6 +381,13 @@ class StartButton extends React.Component<{onClick: ()=>void}>
   render()
   {
     return <div className="start-button" onClick={this.props.onClick}>start</div>;
+  }
+}
+class HuButton extends React.Component<{onClick: ()=>void}>
+{
+  render()
+  {
+    return <div className="hu-button" onClick={this.props.onClick}>Hu</div>;
   }
 }
 

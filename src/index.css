@@ -36,7 +36,7 @@ div.tile > img
   position: absolute;
   object-fit: contain;
 }
-.start-button
+.start-button, .hu-button
 {
   border: 1px solid var(--dark-color);
   color: var(--dark-color);
