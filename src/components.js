@@ -57,15 +57,25 @@ export class Game extends React.Component
   render()
   {
     return <>
-        <Hand tileClass={this.tileClass()} tiles={this.props.hand} discard={
-          (position)=>this.props.actions.discardAndDraw(this.props.p, this.props.pile, position, this.state.timeBeforeDraw, this.state.timeBeforeSort)} />
-        <Controls reset={()=>this.props.actions.resetAndDraw(this.props.initializer(), this.state.handLength, this.state.timeBeforeDraw, this.state.timeBeforeSort)}
-            handLength={{handler: this.handleHandLengthChanged}}
-            tileStyle={{handler: this.handleTileStyleChanged}}
-            tileSuit={{handler: this.handleTileSuitChanged}}
-            allowPairs={{handler: this.handleAllowPairsChanged}}
-            timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.timeBeforeDraw}}
-            timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.timeBeforeSort}}
+        <Hand tileClass={this.tileClass()} tiles={this.props.hand}
+          discard={(position)=>this.props.actions.discardAndDraw({
+            p: this.props.p,
+            pile: this.props.pile,
+            position: position,
+            timeBeforeDraw: this.state.timeBeforeDraw,
+            timeBeforeSort: this.state.timeBeforeSort})} />
+        <Controls
+          reset={()=>this.props.actions.resetAndDraw({
+            pile: this.props.initializer(),
+            p: this.state.handLength,
+            timeBeforeDraw: this.state.timeBeforeDraw,
+            timeBeforeSort: this.state.timeBeforeSort})}
+          handLength={{handler: this.handleHandLengthChanged}}
+          tileStyle={{handler: this.handleTileStyleChanged}}
+          tileSuit={{handler: this.handleTileSuitChanged}}
+          allowPairs={{handler: this.handleAllowPairsChanged}}
+          timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.timeBeforeDraw}}
+          timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.timeBeforeSort}}
         />
     </>;
   }
