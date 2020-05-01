@@ -1,5 +1,8 @@
 import React from 'react';
 import * as gamecommon from './gamecommon';
+import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
+
+type AllowPairs = "disallow" | "allow" | "allow-hog";
 
 type GameProps =
 {
@@ -14,7 +17,7 @@ type GameState =
   handLength: number,
   tileStyle: string,
   tileSuit: string,
-  allowPairs: string,
+  allowPairs: AllowPairs,
   timeBeforeDraw: number,
   timeBeforeSort: number,
 };
@@ -28,7 +31,7 @@ export class Game extends React.Component<GameProps, GameState>
       handLength: 13,
       tileStyle: "PostModern",
       tileSuit: "dots",
-      allowPairs: "allow-pairs",
+      allowPairs: "allow",
       timeBeforeDraw: 1000,
       timeBeforeSort: 500,
     };
@@ -47,7 +50,7 @@ export class Game extends React.Component<GameProps, GameState>
   };
   handleAllowPairsChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({allowPairs: e.target.value});
+    this.setState({allowPairs: e.target.value as AllowPairs});
   }
   handleTimeBeforeDrawChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
@@ -73,6 +76,15 @@ export class Game extends React.Component<GameProps, GameState>
     }
     else throw new RangeError('PostModern is the only currently supported tileStyle');
   }
+  huValidator(): Validator
+  {
+    switch (this.state.allowPairs)
+    {
+      case 'disallow': return isNormalHu;
+      case 'allow': return (hand) => isNormalHu(hand) || isPairs(hand);
+      case 'allow-hog': return (hand) => isNormalHu(hand) || isPairs(hand) || isPairsWithHog(hand);
+    }
+  }
   render()
   {
     return <>
@@ -85,6 +97,7 @@ export class Game extends React.Component<GameProps, GameState>
             timeBeforeSort: this.state.timeBeforeSort})} />
         <Controls
           hu={()=>this.props.actions.declareHu({
+            validator: this.huValidator(),
             hand: this.props.hand
           })}
           reset={()=>this.props.actions.resetAndDraw({

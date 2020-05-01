@@ -8,6 +8,8 @@ export function fromTiles(hand: gamecommon.Hand): Array<number>
   return ret;
 }
 
+export type Validator = (hand: Array<number>) => boolean;
+
 export function isNormalHu(hand: Array<number>): boolean
 {
   for (const [rank, count] of hand.entries())
