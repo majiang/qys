@@ -67,9 +67,9 @@ const sortAndDrawLogic = createLogic({
     }, action.payload.timeBetweenSortDraw);
   }
 });
-type Hand = Array<number>;
-type Pile = Array<number>;
-type Tile = number;
+export type Hand = Array<number>;
+export type Pile = Array<number>;
+export type Tile = number;
 type GameState = {
   hand: Hand,
   p: number,

@@ -1,8 +1,27 @@
 import React from 'react';
+import * as gamelogics from './gamelogics';
 
-export class Game extends React.Component
+type GameProps =
 {
-  constructor (props)
+  initializer: ()=>Array<number>,
+  hand: gamelogics.Hand,
+  p: number,
+  pile: gamelogics.Pile,
+  actions: any,
+};
+type GameState =
+{
+  handLength: number,
+  tileStyle: string,
+  tileSuit: string,
+  allowPairs: string,
+  timeBeforeDraw: number,
+  timeBeforeSort: number,
+};
+
+export class Game extends React.Component<GameProps, GameState>
+{
+  constructor (props: GameProps)
   {
     super (props);
     this.state = {
@@ -14,31 +33,31 @@ export class Game extends React.Component
       timeBeforeSort: 500,
     };
   }
-  handleHandLengthChanged = (e) =>
+  handleHandLengthChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({handLength: parseInt(e.target.value)});
   };
-  handleTileStyleChanged = (e) =>
+  handleTileStyleChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({tileStyle: e.target.value});
   };
-  handleTileSuitChanged = (e) =>
+  handleTileSuitChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({tileSuit: e.target.value});
   };
-  handleAllowPairsChanged = (e) =>
+  handleAllowPairsChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({allowPairs: e.target.value});
   }
-  handleTimeBeforeDrawChanged = (e) =>
+  handleTimeBeforeDrawChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({timeBeforeDraw: e.target.value});
+    this.setState({timeBeforeDraw: parseInt(e.target.value)});
   };
-  handleTimeBeforeSortChanged = (e) =>
+  handleTimeBeforeSortChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({timeBeforeSort: e.target.value});
+    this.setState({timeBeforeSort: parseInt(e.target.value)});
   };
-  tileClass()
+  tileClass(): React.ComponentClass<TileProps>
   {
     console.log(this.state.tileStyle);
     console.log(this.state.tileSuit);
@@ -81,11 +100,17 @@ export class Game extends React.Component
   }
 }
 
-class Hand extends React.Component
+type HandProps =
 {
-  renderTile(i, tile)
+  tiles: gamelogics.Hand,
+  tileClass: React.ComponentClass<TileProps>,
+  discard: (position: number) => void,
+};
+class Hand extends React.Component<HandProps>
+{
+  renderTile(i: number, tile: gamelogics.Tile)
   {
-    return (<this.props.tileClass key={tile} index={i} rank={~~(tile/4)} onClick={()=>this.props.discard(i)}/>);
+    return (<this.props.tileClass key={tile} rank={~~(tile/4)} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
@@ -96,20 +121,26 @@ class Hand extends React.Component
   }
 }
 
-class Tile extends React.Component
+type TileProps =
+{
+  rank: number,
+  onClick: () => void,
+};
+
+class Tile extends React.Component<TileProps>
 {
   render()
   {
     return <div className="tile" onClick={this.props.onClick}>
       <img src={this.imageUrl()}
       style={this.generateStyle(this.props.rank)}
-      alt={this.props.rank+1}/></div>
+      alt={(this.props.rank+1).toString()}/></div>
   }
-  imageUrl()
+  imageUrl(): string
   {
     throw new TypeError("imageUrl() is not implemented");
   }
-  generateStyle(r)
+  generateStyle(r: number)
   {
     return {
         clip: `rect(${this.top(r)}, ${this.right(r)}, ${this.bottom(r)}, ${this.left(r)})`,
@@ -117,16 +148,16 @@ class Tile extends React.Component
         left: -this.left(r),
     };
   }
-  top(r){throw new TypeError("top() is not implemented");}
-  right(r){throw new TypeError("right() is not implemented");}
-  bottom(r){throw new TypeError("bottom() is not implemented");}
-  left(r){throw new TypeError("left() is not implemented");}
+  top(r: number): number{throw new TypeError("top() is not implemented");}
+  right(r: number): number{throw new TypeError("right() is not implemented");}
+  bottom(r: number): number{throw new TypeError("bottom() is not implemented");}
+  left(r: number): number{throw new TypeError("left() is not implemented");}
 }
 
 class PostModernTile extends Tile
 {
-  top(r){return 0;}
-  bottom(r){return 88;}
+  top(r: number){return 0;}
+  bottom(r: number){return 88;}
   imageUrl()
   {
     return "postmodern.svg";
@@ -135,23 +166,43 @@ class PostModernTile extends Tile
 
 class PostModernBamboos extends PostModernTile
 {
-  left(r){return (24+r)*64;}
-  right(r){return (25+r)*64;}
+  left(r: number){return (24+r)*64;}
+  right(r: number){return (25+r)*64;}
 }
 
 class PostModernCharacters extends PostModernTile
 {
-  left(r){return (15+r)*64;}
-  right(r){return (16+r)*64;}
+  left(r: number){return (15+r)*64;}
+  right(r: number){return (16+r)*64;}
 }
 
 class PostModernDots extends PostModernTile
 {
-  left(r){return (0+r)*64;}
-  right(r){return (1+r)*64;}
+  left(r: number){return (0+r)*64;}
+  right(r: number){return (1+r)*64;}
 }
+type Handler = (e: React.ChangeEvent<HTMLInputElement>) => void;
+type HasHandler =
+{
+  handler: Handler
+};
+type HasHandlerAndValue =
+{
+  handler: Handler,
+  value: any,
+}
+type ControlsProps =
+{
+  reset: () => void,
+  handLength: HasHandler,
+  tileStyle: HasHandler,
+  tileSuit: HasHandler,
+  allowPairs: HasHandler,
+  timeBeforeDraw: HasHandlerAndValue,
+  timeBeforeSort: HasHandlerAndValue,
+};
 
-class Controls extends React.Component
+class Controls extends React.Component<ControlsProps>
 {
   renderStartButton()
   {
@@ -246,7 +297,14 @@ class Controls extends React.Component
     </form>;
   }
 }
-class Radios extends React.Component
+type RadiosProps =
+{
+  choices: Array<any>,
+  name: string,
+  onChange: Handler,
+  defaultValue: any,
+};
+class Radios extends React.Component<RadiosProps>
 {
   render()
   {
@@ -260,7 +318,15 @@ class Radios extends React.Component
     />)}</>;
   }
 }
-class Radio extends React.Component
+type RadioProps =
+{
+  name: string,
+  value: string,
+  onChange: Handler,
+  defaultValue: string,
+  display: string,
+};
+class Radio extends React.Component<RadioProps>
 {
   render()
   {
@@ -274,7 +340,20 @@ class Radio extends React.Component
       </label></>;
   }
 }
-class Range extends React.Component
+type RangeProps =
+{
+  id: string,
+  label: string,
+  value: {
+    min: number,
+    max: number,
+    step: number,
+    default: number,
+    display: string,
+  },
+  handler: Handler,
+};
+class Range extends React.Component<RangeProps>
 {
   render()
   {
@@ -289,7 +368,7 @@ class Range extends React.Component
     </>;
   }
 }
-class StartButton extends React.Component
+class StartButton extends React.Component<{onClick: ()=>void}>
 {
   render()
   {
@@ -297,7 +376,7 @@ class StartButton extends React.Component
   }
 }
 
-function formatDigits(n, d)
+function formatDigits(n: number, d: number)
 {
   const s = n.toString();
   const l = s.length;
