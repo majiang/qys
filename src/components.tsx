@@ -3,6 +3,8 @@ import * as gamecommon from './gamecommon';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
+type TileStyle = "PostModern";
+type TileSuit = "bamboos" | "characters" | "dots";
 
 type GameProps =
 {
@@ -15,8 +17,8 @@ type GameProps =
 type GameState =
 {
   handLength: number,
-  tileStyle: string,
-  tileSuit: string,
+  tileStyle: TileStyle,
+  tileSuit: TileSuit,
   allowPairs: AllowPairs,
   timeBeforeDraw: number,
   timeBeforeSort: number,
@@ -42,11 +44,11 @@ export class Game extends React.Component<GameProps, GameState>
   };
   handleTileStyleChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({tileStyle: e.target.value});
+    this.setState({tileStyle: e.target.value as TileStyle});
   };
   handleTileSuitChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({tileSuit: e.target.value});
+    this.setState({tileSuit: e.target.value as TileSuit});
   };
   handleAllowPairsChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
@@ -62,19 +64,15 @@ export class Game extends React.Component<GameProps, GameState>
   };
   tileClass(): React.ComponentClass<TileProps>
   {
-    console.log(this.state.tileStyle);
-    console.log(this.state.tileSuit);
-    if (this.state.tileStyle === 'PostModern')
+    switch (this.state.tileStyle)
     {
-      switch (this.state.tileSuit)
+      case 'PostModern': switch (this.state.tileSuit)
       {
         case 'bamboos': return PostModernBamboos;
         case 'characters': return PostModernCharacters;
         case 'dots': return PostModernDots;
-        default: throw new RangeError('suit not supported')
       }
     }
-    else throw new RangeError('PostModern is the only currently supported tileStyle');
   }
   huValidator(): Validator
   {
