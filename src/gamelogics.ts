@@ -1,8 +1,8 @@
 import { createLogic, createLogicMiddleware } from 'redux-logic';
 import { Dispatch, Done} from 'redux-logic-helper';
 import { applyMiddleware, createStore } from 'redux';
-import { actionCreatorFactory, isType, Action, AnyAction } from 'typescript-fsa';
-import { act } from 'react-dom/test-utils';
+import { actionCreatorFactory, isType } from 'typescript-fsa';
+import { reducerWithInitialState } from 'typescript-fsa-reducers';
 const actionCreator = actionCreatorFactory();
 
 export const gameActions = {
@@ -80,38 +80,22 @@ const nullGame: GameState = {
   p: 0,
   pile: [],
 };
-const gameReducer = (state = nullGame, action: Action<unknown>) => {
-  console.log(state);
-  console.log(action);
-  switch (action.type)
-  {
-    case gameActions.discard.type:
-      if (!isType(action, gameActions.discard)) throw new TypeError();
-      return {...state,
-        hand: discardTile(state.hand, action.payload.position),
-      };
-    case gameActions.draw.type:
-      if (!isType(action, gameActions.draw)) throw new TypeError();
-      return {...state,
-        hand: drawTile(state.hand, action.payload.tile),
-        p: state.p + 1,
-      };
-    case gameActions.reset.type:
-      if (!isType(action, gameActions.reset)) throw new TypeError();
-      return {
-        hand: dealHand(action.payload.p, action.payload.pile),
-        p: action.payload.p,
-        pile: action.payload.pile,
-      };
-    case gameActions.sort.type:
-      if (!isType(action, gameActions.sort)) throw new TypeError();
-      return {...state,
-        hand: sortHand(state.hand),
-      }
-    default:
-      return state;
-  }
-};
+const gameReducer = reducerWithInitialState(nullGame)
+.case(gameActions.discard, (state, payload) => ({...state,
+  hand: discardTile(state.hand, payload.position),
+}))
+.case(gameActions.draw, (state, payload) => ({...state,
+  hand: drawTile(state.hand, payload.tile),
+  p: state.p + 1,
+}))
+.case(gameActions.reset, (state, payload) => ({
+  hand: dealHand(payload.p, payload.pile),
+  p: payload.p,
+  pile: payload.pile,
+}))
+.case(gameActions.sort, (state, payload) => ({...state,
+  hand: sortHand(state.hand),
+}));
 export const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([
     discardAndDrawLogic,
     resetAndDrawLogic,
