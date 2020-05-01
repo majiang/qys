@@ -54,7 +54,7 @@ export function isPairs(hand: Array<number>): boolean
       default: return false;
     }
   }
-  return (sets <= 1) && (pairs % gamecommon.setSize == 1);
+  return (sets <= 1) && (pairs % gamecommon.setSize === 1);
 }
 
 export function isPairsWithHog(hand: Array<number>): boolean
@@ -63,7 +63,7 @@ export function isPairsWithHog(hand: Array<number>): boolean
   let pairs = 0;
   for (const count of hand)
   {
-    if (count == gamecommon.setSize)
+    if (count === gamecommon.setSize)
     {
       sets += 1;
       continue;
@@ -72,5 +72,5 @@ export function isPairsWithHog(hand: Array<number>): boolean
       return false;
     pairs += count / gamecommon.pairSize;
   }
-  return (sets <= 1) && (pairs % gamecommon.setSize == 1);
+  return (sets <= 1) && (pairs % gamecommon.setSize === 1);
 }
