@@ -1,7 +1,6 @@
 import React from 'react';
 import * as gamecommon from './gamecommon';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
-import { type } from 'os';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern";
@@ -14,7 +13,7 @@ type GameProps =
   p: number,
   pile: gamecommon.Pile,
   actions: any,
-  messages: Array<string>
+  messages: Array<[number, string]>
 };
 type GameState =
 {
@@ -199,14 +198,14 @@ class PostModernDots extends PostModernTile
 }
 type StatusProps =
 {
-  messages: Array<string>
+  messages: Array<[number, string]>
 };
 class Status extends React.Component<StatusProps>
 {
   render()
   {
     return <ul className="status">
-      {this.props.messages.map((v, i) => <li key={i}>{v}</li>)}
+      {this.props.messages.map((v) => <li key={v[0]}>{v[1]}</li>)}
     </ul>;
   }
 }
