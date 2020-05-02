@@ -1,6 +1,7 @@
 import React from 'react';
 import * as gamecommon from './gamecommon';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
+import { type } from 'os';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern";
@@ -13,6 +14,7 @@ type GameProps =
   p: number,
   pile: gamecommon.Pile,
   actions: any,
+  messages: Array<string>
 };
 type GameState =
 {
@@ -93,6 +95,7 @@ export class Game extends React.Component<GameProps, GameState>
             position: position,
             timeBeforeDraw: this.state.timeBeforeDraw,
             timeBeforeSort: this.state.timeBeforeSort})} />
+        <Status messages={this.props.messages} />
         <Controls
           hu={()=>this.props.actions.declareHu({
             validator: this.huValidator(),
@@ -194,6 +197,20 @@ class PostModernDots extends PostModernTile
   left(r: number){return (0+r)*64;}
   right(r: number){return (1+r)*64;}
 }
+type StatusProps =
+{
+  messages: Array<string>
+};
+class Status extends React.Component<StatusProps>
+{
+  render()
+  {
+    return <ul className="status">
+      {this.props.messages.map((v) => <li>{v}</li>)}
+    </ul>;
+  }
+}
+
 type Handler = (e: React.ChangeEvent<HTMLInputElement>) => void;
 type HasHandler =
 {

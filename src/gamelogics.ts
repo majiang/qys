@@ -74,11 +74,13 @@ type GameState = {
   hand: Hand,
   p: number,
   pile: Pile,
+  messages: Array<string>
 };
 const nullGame: GameState = {
   hand: [],
   p: 0,
   pile: [],
+  messages: [],
 };
 const gameReducer = reducerWithInitialState(nullGame)
 .case(gameActions.discard, (state, payload) => ({...state,
@@ -88,7 +90,7 @@ const gameReducer = reducerWithInitialState(nullGame)
   hand: drawTile(state.hand, payload.tile),
   p: state.p + 1,
 }))
-.case(gameActions.reset, (state, payload) => ({
+.case(gameActions.reset, (state, payload) => ({...state,
   hand: dealHand(payload.p, payload.pile),
   p: payload.p,
   pile: payload.pile,
@@ -97,7 +99,7 @@ const gameReducer = reducerWithInitialState(nullGame)
   hand: sortHand(state.hand),
 }))
 .case(gameActions.declareHu, (state, payload) => ({...state,
-  hand: payload.validator(fromTiles(payload.hand)) ? [0, 1, 2, 3] : [0, 8, 16, 24, 32],
+  messages: payload.validator(fromTiles(payload.hand)) ? [...state.messages, "HU!"] : [...state.messages, "Cuohu..."],
 }))
 ;
 export const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware([
