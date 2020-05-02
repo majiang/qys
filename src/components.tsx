@@ -206,7 +206,7 @@ class Status extends React.Component<StatusProps>
   render()
   {
     return <ul className="status">
-      {this.props.messages.map((v) => <li>{v}</li>)}
+      {this.props.messages.map((v, i) => <li key={i}>{v}</li>)}
     </ul>;
   }
 }
