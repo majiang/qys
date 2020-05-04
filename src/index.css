@@ -23,13 +23,20 @@ code {
   src: url('/GL-MahjongTile-Clr.woff2') format('woff2');
 }
 
-div.tile
+div.tile.pm
 {
-    position: relative;
-    overflow: hidden;
-    width: 64px;
-    height: 88px;
-    display: inline-block;
+  position: relative;
+  overflow: hidden;
+  width: 64px;
+  height: 88px;
+  display: inline-block;
+}
+div.tile.gl
+{
+  position: relative;
+  width: 64px;
+  height: 91px;
+  display: inline-block;
 }
 div.tile > img
 {
