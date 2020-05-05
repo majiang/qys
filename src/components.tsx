@@ -23,6 +23,7 @@ type GameState =
   allowPairs: AllowPairs,
   timeBeforeDraw: number,
   timeBeforeSort: number,
+  timeOfGame: number,
 };
 
 export class Game extends React.Component<GameProps, GameState>
@@ -37,6 +38,7 @@ export class Game extends React.Component<GameProps, GameState>
       allowPairs: "allow",
       timeBeforeDraw: 1000,
       timeBeforeSort: 500,
+      timeOfGame: 60000,
     };
   }
   handleHandLengthChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -62,6 +64,10 @@ export class Game extends React.Component<GameProps, GameState>
   handleTimeBeforeSortChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({timeBeforeSort: parseInt(e.target.value)});
+  };
+  handleTimeOfGameChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
+  {
+    this.setState({timeOfGame: parseInt(e.target.value)});
   };
   tileClass(): React.ComponentClass<TileProps>
   {
@@ -100,13 +106,18 @@ export class Game extends React.Component<GameProps, GameState>
             position: position,
             timeBeforeDraw: this.state.timeBeforeDraw,
             timeBeforeSort: this.state.timeBeforeSort})} />
-        <Status messages={this.props.messages} />
         <Controls
           hu={()=>this.props.actions.declareHu({
             validator: this.huValidator(),
-            hand: this.props.hand
+            p: this.state.handLength,
+            pile: this.props.initializer(),
+            hand: this.props.hand,
+            time: new Date(),
+            timeBeforeDraw: this.state.timeBeforeDraw,
+            timeBeforeSort: this.state.timeBeforeSort,
           })}
-          reset={()=>this.props.actions.resetAndDraw({
+          reset={()=>this.props.actions.resetGame({
+            started: new Date(),
             pile: this.props.initializer(),
             p: this.state.handLength,
             timeBeforeDraw: this.state.timeBeforeDraw,
@@ -117,7 +128,9 @@ export class Game extends React.Component<GameProps, GameState>
           allowPairs={{handler: this.handleAllowPairsChanged}}
           timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.timeBeforeDraw}}
           timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.timeBeforeSort}}
+          timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.timeOfGame}}
         />
+        <Status messages={this.props.messages} />
     </>;
   }
 }
@@ -287,6 +300,7 @@ type ControlsProps =
   allowPairs: HasHandler,
   timeBeforeDraw: HasHandlerAndValue,
   timeBeforeSort: HasHandlerAndValue,
+  timeOfGame: HasHandlerAndValue,
 };
 
 class Controls extends React.Component<ControlsProps>
@@ -376,6 +390,21 @@ class Controls extends React.Component<ControlsProps>
           display: (this.props.timeBeforeSort.value/1000).toFixed(1)+"s",
         }} /></fieldset>
   }
+  renderTimeOfGame()
+  {
+    return <fieldset><Range
+        id="time-of-game"
+        label="time of game"
+        handler={this.props.timeOfGame.handler}
+        value={{
+          min: 30000,
+          max: 600000,
+          step: 1000,
+          default: 60000,
+          display: <>{formatDigits(this.props.timeOfGame.value/1000, 3)}s</>,
+        }}
+    /></fieldset>;
+  }
   render()
   {
     return <form className="controls">
@@ -387,6 +416,7 @@ class Controls extends React.Component<ControlsProps>
         {this.renderAllowPairs()}
         {this.renderTimeBeforeDraw()}
         {this.renderTimeBeforeSort()}
+        {this.renderTimeOfGame()}
     </form>;
   }
 }
@@ -442,7 +472,7 @@ type RangeProps =
     max: number,
     step: number,
     default: number,
-    display: string,
+    display:  string | JSX.Element,
   },
   handler: Handler,
 };
@@ -465,14 +495,14 @@ class StartButton extends React.Component<{onClick: ()=>void}>
 {
   render()
   {
-    return <div className="start-button" onClick={this.props.onClick}>start</div>;
+    return <div className="start-button" onClick={this.props.onClick}><span className="start-text">start</span></div>;
   }
 }
 class HuButton extends React.Component<{onClick: ()=>void}>
 {
   render()
   {
-    return <div className="hu-button" onClick={this.props.onClick}>Hu</div>;
+    return <div className="hu-button" onClick={this.props.onClick}><span className="hu-text">Hu</span></div>;
   }
 }
 

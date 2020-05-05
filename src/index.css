@@ -49,8 +49,15 @@ div.tile > img
   color: var(--dark-color);
   font-weight: bold;
   box-sizing: border-box;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24em;
+}
+.hu-button
+{
+  height: 3em;
+  margin-bottom: 0.5em;
 }
 
 fieldset
@@ -93,7 +100,7 @@ fieldset.allow-pairs > label
 {
   width: 6em;
 }
-label[for=time-before-draw], label[for=time-before-sort]
+label[for=time-before-draw], label[for=time-before-sort], label[for="time-of-game"]
 {
   box-sizing: border-box;
   padding-left: 0.4em;
