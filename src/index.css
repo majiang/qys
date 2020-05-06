@@ -59,6 +59,17 @@ div.tile > img
   height: 3em;
   margin-bottom: 0.5em;
 }
+.status-labels
+{
+  width: 24em;
+  display: block;
+}
+.status-label
+{
+  margin: 0;
+  width: 12em;
+  display: inline-block;
+}
 
 fieldset
 {

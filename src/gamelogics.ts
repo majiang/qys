@@ -15,7 +15,7 @@ export const gameActions = {
   declareHu: actionCreator<{p: number, pile: Pile, hand: Hand, validator: Validator, time: Date, timeBeforeDraw: number, timeBeforeSort: number}>('declareHu'),
   reset: actionCreator<{pile: Pile, p: number, started: Date}>('reset'),
   resetAndDraw: actionCreator<{pile: Pile, p: number, started: Date, timeBeforeDraw: number, timeBeforeSort: number}>('resetAndDraw'),
-  resetGame: actionCreator<({started: Date, pile: Pile, p: number, timeBeforeDraw: number, timeBeforeSort: number})>('resetGame'),
+  resetGame: actionCreator<({started: Date, pile: Pile, p: number, timeBeforeDraw: number, timeBeforeSort: number, timeOfGame: number})>('resetGame'),
   newGame: actionCreator<({started: Date})>('newGame'),
   sort: actionCreator<void>('sort'),
   sortAndDraw: actionCreator<{pile: Pile, p: number, timeBetweenSortDraw: number}>('sortAndDraw'),
@@ -93,7 +93,7 @@ const resetGamelogic = createLogic({
     setTimeout(() => {
       dispatch(gameActions.finish({}));
       done();
-    }, 30000);
+    }, action.payload.timeOfGame);
   }
 });
 const declareHuLogic = createLogic({
@@ -106,7 +106,7 @@ const declareHuLogic = createLogic({
       dispatch(gameActions.scoreHu({time: action.payload.time, tbd: action.payload.timeBeforeDraw}));
     else
       dispatch(gameActions.scoreCuohu({}));
-    dispatch(gameActions.appendMessage({message: `declared ${hu} hu at ${action.payload.time}`}));
+    dispatch(gameActions.appendMessage({message: `declared ${hu} hu`}));
     dispatch(gameActions.resetAndDraw({
       pile: action.payload.pile,
       p: action.payload.p,
@@ -152,12 +152,9 @@ const gameReducer = reducerWithInitialState(nullGame)
 .case(gameActions.sort, (state, payload) => ({...state,
   hand: sortHand(state.hand),
 }))
-.case(gameActions.declareHu, (state, payload) => ({...state,
-  messages: appendMessage(state.messages, payload.validator(fromTiles(payload.hand)) ? "HU!" : "cuohu..."),
-}))
 .case(gameActions.newGame, (state, payload) => ({...nullGame,
   started: payload.started,
-  messages: [[0, `new game started at ${payload.started}`]],
+  messages: appendMessage([], `new game started at ${payload.started}`),
 }))
 .case(gameActions.appendMessage, (state, payload) => ({...state,
   messages: appendMessage(state.messages, payload.message)
@@ -169,7 +166,7 @@ const gameReducer = reducerWithInitialState(nullGame)
   score: state.score - 1,
 }))
 .case(gameActions.finish, (state, payload) => ({...state,
-  messages: appendMessage(state.messages, `score: ${state.score}`),
+  messages: appendMessage(state.messages, `finish! score: ${~~(state.score * 1000)}`),
 }))
 ;
 function appendMessage(messages: Array<[number, string]>, newMessage: string): Array<[number, string]>

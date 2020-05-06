@@ -13,6 +13,8 @@ type GameProps =
   p: number,
   pile: gamecommon.Pile,
   actions: any,
+  score: number | null,
+  started: Date | null,
   messages: Array<[number, string]>
 };
 type GameState =
@@ -24,6 +26,8 @@ type GameState =
   timeBeforeDraw: number,
   timeBeforeSort: number,
   timeOfGame: number,
+  timeRest: number | null,
+  displayTime: NodeJS.Timeout | null,
 };
 
 export class Game extends React.Component<GameProps, GameState>
@@ -39,8 +43,17 @@ export class Game extends React.Component<GameProps, GameState>
       timeBeforeDraw: 1000,
       timeBeforeSort: 500,
       timeOfGame: 60000,
+      timeRest: null,
+      displayTime: null,
     };
   }
+  handleTimeRestChanged = () => {
+    if (this.props.started == null)
+      return;
+    let timeRest = this.props.started.valueOf() + this.state.timeOfGame - new Date().valueOf();
+    if (timeRest < 0) timeRest = 0;
+    this.setState({timeRest});
+  };
   handleHandLengthChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
     this.setState({handLength: parseInt(e.target.value)});
@@ -69,6 +82,72 @@ export class Game extends React.Component<GameProps, GameState>
   {
     this.setState({timeOfGame: parseInt(e.target.value)});
   };
+  handleKeydown = (e: KeyboardEvent) =>
+  {
+    if (e.keyCode === 32) // space: hu
+    {
+      e.preventDefault();
+      return this.props.actions.declareHu({
+        validator: this.huValidator(),
+        p: this.state.handLength,
+        pile: this.props.initializer(),
+        hand: this.props.hand,
+        time: new Date(),
+        timeBeforeDraw: this.state.timeBeforeDraw,
+        timeBeforeSort: this.state.timeBeforeSort,
+      });
+    }
+    if (e.keyCode < 48) return;
+    if (e.keyCode === 48) // 0: drawn
+    {
+      return this.props.actions.discardAndDraw({
+        p: this.props.p,
+        pile: this.props.pile,
+        position: this.props.hand.length - 1,
+        timeBeforeDraw: this.state.timeBeforeDraw,
+        timeBeforeSort: this.state.timeBeforeSort});
+    }
+    if (e.keyCode === 83) // s: start
+    {
+      return this.props.actions.resetGame({
+        started: new Date(),
+        pile: this.props.initializer(),
+        p: this.state.handLength,
+        timeBeforeDraw: this.state.timeBeforeDraw,
+        timeBeforeSort: this.state.timeBeforeSort,
+        timeOfGame: this.state.timeOfGame,
+      });
+    }
+    if (58 <= e.keyCode) return;
+    console.log(`keyCode: ${e.keyCode}`);
+    let rank = e.keyCode - 49;
+    console.log(`rank: ${rank}`);
+    let position = this.props.hand.findIndex((tile, index) => {
+      console.log(`${index}: ${tile}`);
+      return (gamecommon.rank(tile) === rank);
+    });
+    console.log(`position: ${position}`);
+    if (position < 0)
+    {
+      return;
+    }
+    this.props.actions.discardAndDraw({
+      p: this.props.p,
+      pile: this.props.pile,
+      position: position,
+      timeBeforeDraw: this.state.timeBeforeDraw,
+      timeBeforeSort: this.state.timeBeforeSort});
+  };
+  componentDidMount()
+  {
+    document.addEventListener("keydown", this.handleKeydown);
+    this.setState({displayTime: setInterval(this.handleTimeRestChanged, 10)});
+  }
+  componentWillUnmount()
+  {
+    document.removeEventListener("keydown", this.handleKeydown);
+    clearInterval(this.state.displayTime!);
+  }
   tileClass(): React.ComponentClass<TileProps>
   {
     switch (this.state.tileStyle)
@@ -107,6 +186,8 @@ export class Game extends React.Component<GameProps, GameState>
             timeBeforeDraw: this.state.timeBeforeDraw,
             timeBeforeSort: this.state.timeBeforeSort})} />
         <Controls
+          score={this.props.score}
+          time={this.state.timeRest}
           hu={()=>this.props.actions.declareHu({
             validator: this.huValidator(),
             p: this.state.handLength,
@@ -294,6 +375,8 @@ type ControlsProps =
 {
   reset: () => void,
   hu: () => void,
+  score: number | null,
+  time: number | null,
   handLength: HasHandler,
   tileStyle: HasHandler,
   tileSuit: HasHandler,
@@ -308,6 +391,13 @@ class Controls extends React.Component<ControlsProps>
   renderHuButton()
   {
     return <HuButton onClick={this.props.hu} />;
+  }
+  renderStatus()
+  {
+    return <div className="status-labels">
+      <div className="status-label">{(this.props.score == null) ? `` : `score: ${~~(this.props.score * 1000)}`}</div>
+      <div className="status-label">{(this.props.time == null) ? `` : `time: ${this.props.time.toFixed(2)}`}</div>
+    </div>;
   }
   renderStartButton()
   {
@@ -409,6 +499,7 @@ class Controls extends React.Component<ControlsProps>
   {
     return <form className="controls">
         {this.renderHuButton()}
+        {this.renderStatus()}
         {this.renderStartButton()}
         {this.renderHandLength()}
         {this.renderTileStyle()}
