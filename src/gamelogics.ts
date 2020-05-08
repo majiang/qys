@@ -82,6 +82,7 @@ const resetGamelogic = createLogic({
   process({ action }: { action: any }, dispatch: Dispatch, done: Done)
   {
     if (!isType(action, gameActions.resetGame)) throw new TypeError();
+    console.log(action.payload);
     dispatch(gameActions.newGame({started: action.payload.started}));
     dispatch(gameActions.resetAndDraw({
       pile: action.payload.pile,
@@ -90,10 +91,15 @@ const resetGamelogic = createLogic({
       timeBeforeDraw: action.payload.timeBeforeDraw,
       timeBeforeSort: action.payload.timeBeforeSort,
     }));
+    console.log(`${action.payload.timeOfGame} + ${new Date()}`);
     setTimeout(() => {
+      console.log(`${new Date()}`);
       dispatch(gameActions.finish({}));
+      console.log(`${new Date()}`);
       done();
+      console.log(`${new Date()}`);
     }, action.payload.timeOfGame);
+    console.log(`${new Date()}`);
   }
 });
 const declareHuLogic = createLogic({
@@ -165,9 +171,13 @@ const gameReducer = reducerWithInitialState(nullGame)
 .case(gameActions.scoreCuohu, (state, payload) => ({...state,
   score: state.score - 1,
 }))
-.case(gameActions.finish, (state, payload) => ({...state,
-  messages: appendMessage(state.messages, `finish! score: ${~~(state.score * 1000)}`),
-}))
+.case(gameActions.finish, (state, payload) => {
+  console.log(`finish at: ${new Date()}`);
+  console.log(state);
+  console.log(payload);
+  return {...nullGame,
+  messages: appendMessage([], `finish! score: ${~~(state.score * 1000)}`),
+};})
 ;
 function appendMessage(messages: Array<[number, string]>, newMessage: string): Array<[number, string]>
 {

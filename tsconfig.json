@@ -7,6 +7,8 @@
       "dom.iterable",
       "esnext"
     ],
+    "strictPropertyInitialization": true,
+    "strictNullChecks": true,
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

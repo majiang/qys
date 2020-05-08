@@ -202,7 +202,9 @@ export class Game extends React.Component<GameProps, GameState>
             pile: this.props.initializer(),
             p: this.state.handLength,
             timeBeforeDraw: this.state.timeBeforeDraw,
-            timeBeforeSort: this.state.timeBeforeSort})}
+            timeBeforeSort: this.state.timeBeforeSort,
+            timeOfGame: this.state.timeOfGame,
+          })}
           handLength={{handler: this.handleHandLengthChanged}}
           tileStyle={{handler: this.handleTileStyleChanged}}
           tileSuit={{handler: this.handleTileSuitChanged}}
@@ -230,6 +232,7 @@ class Hand extends React.Component<HandProps>
   }
   render()
   {
+    console.log(this.props.tiles);
     return <div className="hand">
         {this.props.tiles.map((tile, i)=>this.renderTile(i, tile))}
         </div>;
