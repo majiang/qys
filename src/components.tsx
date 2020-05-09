@@ -1,6 +1,7 @@
 import React from 'react';
 import * as gamecommon from './gamecommon';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
+import { gameActions } from './gamelogics';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern" | "GLMahjongTile";
@@ -12,7 +13,7 @@ type GameProps =
   hand: gamecommon.Hand,
   p: number,
   pile: gamecommon.Pile,
-  actions: any,
+  actions: typeof gameActions,
   score: number | null,
   started: Date | null,
   messages: Array<[number, string]>
