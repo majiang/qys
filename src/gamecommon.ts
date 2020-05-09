@@ -8,7 +8,7 @@ export function rank(tile: Tile): number
 {
     return ~~(tile/duplicates);
 }
-export function shufflePile()
+export function shufflePile(): Pile
 {
   let m = deck;
   let pile = Array.from(Array(m).keys());

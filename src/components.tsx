@@ -2,6 +2,7 @@ import React from 'react';
 import * as gamecommon from './gamecommon';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
 import { gameActions } from './gamelogics';
+import { Deal, newDeal } from './deal';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern" | "GLMahjongTile";
@@ -10,9 +11,7 @@ type TileSuit = "bamboos" | "characters" | "dots";
 type GameProps =
 {
   initializer: ()=>Array<number>,
-  hand: gamecommon.Hand,
-  p: number,
-  pile: gamecommon.Pile,
+  deal: Deal,
   actions: typeof gameActions,
   score: number | null,
   started: Date | null,
@@ -83,61 +82,64 @@ export class Game extends React.Component<GameProps, GameState>
   {
     this.setState({timeOfGame: parseInt(e.target.value)});
   };
+  declareHu = () =>
+  {
+    return this.props.actions.declareHu({
+      validator: this.huValidator(),
+      deal: this.props.deal,
+      nextDeal: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
+      timeBeforeDraw: this.state.timeBeforeDraw,
+      timeBeforeSort: this.state.timeBeforeSort,
+    });
+  };
+  directDiscardAndDraw = () =>
+  {
+    return this.discardAndDraw(this.props.deal.hand.length - 1);
+  };
+  discardAndDraw = (position: number) =>
+  {
+    return this.props.actions.discardAndDraw({
+      deal: this.props.deal,
+      position: position,
+      timeBeforeDraw: this.state.timeBeforeDraw,
+      timeBeforeSort: this.state.timeBeforeSort});
+  };
+  resetGame = () =>
+  {
+    return this.props.actions.resetGame({
+      deal: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
+      timeBeforeDraw: this.state.timeBeforeDraw,
+      timeBeforeSort: this.state.timeBeforeSort,
+      timeOfGame: this.state.timeOfGame,
+    });
+  };
   handleKeydown = (e: KeyboardEvent) =>
   {
     if (e.keyCode === 32) // space: hu
     {
       e.preventDefault();
-      return this.props.actions.declareHu({
-        validator: this.huValidator(),
-        p: this.state.handLength,
-        pile: this.props.initializer(),
-        hand: this.props.hand,
-        time: new Date(),
-        timeBeforeDraw: this.state.timeBeforeDraw,
-        timeBeforeSort: this.state.timeBeforeSort,
-      });
+      return this.declareHu();
     }
     if (e.keyCode < 48) return;
     if (e.keyCode === 48) // 0: drawn
     {
-      return this.props.actions.discardAndDraw({
-        p: this.props.p,
-        pile: this.props.pile,
-        position: this.props.hand.length - 1,
-        timeBeforeDraw: this.state.timeBeforeDraw,
-        timeBeforeSort: this.state.timeBeforeSort});
+      return this.directDiscardAndDraw();
     }
     if (e.keyCode === 83) // s: start
     {
-      return this.props.actions.resetGame({
-        started: new Date(),
-        pile: this.props.initializer(),
-        p: this.state.handLength,
-        timeBeforeDraw: this.state.timeBeforeDraw,
-        timeBeforeSort: this.state.timeBeforeSort,
-        timeOfGame: this.state.timeOfGame,
-      });
+      return this.resetGame();
     }
     if (58 <= e.keyCode) return;
     console.log(`keyCode: ${e.keyCode}`);
     let rank = e.keyCode - 49;
     console.log(`rank: ${rank}`);
-    let position = this.props.hand.findIndex((tile, index) => {
+    let position = this.props.deal.hand.findIndex((tile, index) => {
       console.log(`${index}: ${tile}`);
       return (gamecommon.rank(tile) === rank);
     });
     console.log(`position: ${position}`);
-    if (position < 0)
-    {
-      return;
-    }
-    this.props.actions.discardAndDraw({
-      p: this.props.p,
-      pile: this.props.pile,
-      position: position,
-      timeBeforeDraw: this.state.timeBeforeDraw,
-      timeBeforeSort: this.state.timeBeforeSort});
+    if (0 <= position)
+      return this.discardAndDraw(position);
   };
   componentDidMount()
   {
@@ -179,33 +181,13 @@ export class Game extends React.Component<GameProps, GameState>
   render()
   {
     return <>
-        <Hand tileClass={this.tileClass()} tiles={this.props.hand}
-          discard={(position)=>this.props.actions.discardAndDraw({
-            p: this.props.p,
-            pile: this.props.pile,
-            position: position,
-            timeBeforeDraw: this.state.timeBeforeDraw,
-            timeBeforeSort: this.state.timeBeforeSort})} />
+        <Hand tileClass={this.tileClass()} hand={this.props.deal.hand}
+          discard={this.discardAndDraw} />
         <Controls
           score={this.props.score}
           time={this.state.timeRest}
-          hu={()=>this.props.actions.declareHu({
-            validator: this.huValidator(),
-            p: this.state.handLength,
-            pile: this.props.initializer(),
-            hand: this.props.hand,
-            time: new Date(),
-            timeBeforeDraw: this.state.timeBeforeDraw,
-            timeBeforeSort: this.state.timeBeforeSort,
-          })}
-          reset={()=>this.props.actions.resetGame({
-            started: new Date(),
-            pile: this.props.initializer(),
-            p: this.state.handLength,
-            timeBeforeDraw: this.state.timeBeforeDraw,
-            timeBeforeSort: this.state.timeBeforeSort,
-            timeOfGame: this.state.timeOfGame,
-          })}
+          hu={this.declareHu}
+          reset={this.resetGame}
           handLength={{handler: this.handleHandLengthChanged}}
           tileStyle={{handler: this.handleTileStyleChanged}}
           tileSuit={{handler: this.handleTileSuitChanged}}
@@ -221,7 +203,7 @@ export class Game extends React.Component<GameProps, GameState>
 
 type HandProps =
 {
-  tiles: gamecommon.Hand,
+  hand: gamecommon.Hand,
   tileClass: React.ComponentClass<TileProps>,
   discard: (position: number) => void,
 };
@@ -233,9 +215,9 @@ class Hand extends React.Component<HandProps>
   }
   render()
   {
-    console.log(this.props.tiles);
+    console.log(this.props.hand);
     return <div className="hand">
-        {this.props.tiles.map((tile, i)=>this.renderTile(i, tile))}
+        {this.props.hand.map((tile, i)=>this.renderTile(i, tile))}
         </div>;
   }
 }
