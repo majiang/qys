@@ -17,9 +17,9 @@ Logic<State, any, any, Dependency, Context, Type>
   return _createLogic<State, any, any, Dependency, Context, Type, Action>({
     ...config,
     type: actionCreator.type,
-    process({action}:{action: any}, dispatch: Dispatch, done: Done){
+    process({ action, getState }: { action: any, getState?: () => State }, dispatch: Dispatch, done: Done){
       if (!isType(action, actionCreator)) throw new TypeError();
-      config.process({action}, dispatch, done);
+      config.process({action, getState}, dispatch, done);
     },
     validate: undefined,
     transform: undefined,

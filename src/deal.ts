@@ -38,11 +38,14 @@ export function dealHand(deal: Deal): Deal
 }
 export function sortHand(deal: Deal): Deal
 {
+  console.log(deal);
   let hand = [...deal.hand];
   hand.sort((a, b) => (a - b));
-  return {...deal,
+  const ret = {...deal,
     hand,
   };
+  console.log(ret);
+  return ret;
 }
 export function newDeal(shuffle: () => Pile, date: () => Date, p: number): Deal
 {

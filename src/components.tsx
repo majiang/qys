@@ -86,8 +86,7 @@ export class Game extends React.Component<GameProps, GameState>
   {
     return this.props.actions.declareHu({
       validator: this.huValidator(),
-      deal: this.props.deal,
-      nextDeal: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
+      next: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
       timeBeforeDraw: this.state.timeBeforeDraw,
       timeBeforeSort: this.state.timeBeforeSort,
     });
@@ -99,7 +98,6 @@ export class Game extends React.Component<GameProps, GameState>
   discardAndDraw = (position: number) =>
   {
     return this.props.actions.discardAndDraw({
-      deal: this.props.deal,
       position: position,
       timeBeforeDraw: this.state.timeBeforeDraw,
       timeBeforeSort: this.state.timeBeforeSort});
@@ -107,7 +105,7 @@ export class Game extends React.Component<GameProps, GameState>
   resetGame = () =>
   {
     return this.props.actions.resetGame({
-      deal: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
+      first: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
       timeBeforeDraw: this.state.timeBeforeDraw,
       timeBeforeSort: this.state.timeBeforeSort,
       timeOfGame: this.state.timeOfGame,
@@ -215,7 +213,6 @@ class Hand extends React.Component<HandProps>
   }
   render()
   {
-    console.log(this.props.hand);
     return <div className="hand">
         {this.props.hand.map((tile, i)=>this.renderTile(i, tile))}
         </div>;
