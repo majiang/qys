@@ -17,15 +17,50 @@ type GameProps =
   started: Date | null,
   messages: Array<[number, string]>
 };
-type GameState =
+type Settings =
 {
   handLength: number,
-  tileStyle: TileStyle,
-  tileSuit: TileSuit,
   allowPairs: AllowPairs,
   timeBeforeDraw: number,
   timeBeforeSort: number,
   timeOfGame: number,
+};
+function huValidator(allowPairs: AllowPairs): Validator
+{
+  switch (allowPairs)
+  {
+    case 'disallow': return isNormalHu;
+    case 'allow': return (hand) => isNormalHu(hand) || isPairs(hand);
+    case 'allow-hog': return (hand) => isNormalHu(hand) || isPairs(hand) || isPairsWithHog(hand);
+  }
+}
+type Theme =
+{
+  tileStyle: TileStyle,
+  tileSuit: TileSuit,
+}
+function tileClass(theme: Theme): React.ComponentClass<TileProps>
+{
+  switch (theme.tileStyle)
+  {
+    case 'PostModern': switch (theme.tileSuit)
+    {
+      case 'bamboos': return PostModernBamboos;
+      case 'characters': return PostModernCharacters;
+      case 'dots': return PostModernDots;
+    }
+    case 'GLMahjongTile': switch (theme.tileSuit)
+    {
+      case 'bamboos': return GLMahjongTileBamboos;
+      case 'characters': return GLMahjongTileCharacters;
+      case 'dots': return GLMahjongTileDots;
+    }
+  }
+}
+type GameState =
+{
+  settings: Settings,
+  theme: Theme,
   timeRest: number | null,
   displayTime: NodeJS.Timeout | null,
 };
@@ -36,13 +71,17 @@ export class Game extends React.Component<GameProps, GameState>
   {
     super (props);
     this.state = {
-      handLength: 13,
-      tileStyle: "PostModern",
-      tileSuit: "dots",
-      allowPairs: "allow",
-      timeBeforeDraw: 1000,
-      timeBeforeSort: 500,
-      timeOfGame: 60000,
+      settings: {
+        handLength: 13,
+        allowPairs: "allow",
+        timeBeforeDraw: 1000,
+        timeBeforeSort: 500,
+        timeOfGame: 60000,
+      },
+      theme: {
+        tileStyle: "PostModern",
+        tileSuit: "dots",
+      },
       timeRest: null,
       displayTime: null,
     };
@@ -50,45 +89,45 @@ export class Game extends React.Component<GameProps, GameState>
   handleTimeRestChanged = () => {
     if (this.props.started == null)
       return;
-    let timeRest = this.props.started.valueOf() + this.state.timeOfGame - new Date().valueOf();
+    let timeRest = this.props.started.valueOf() + this.state.settings.timeOfGame - new Date().valueOf();
     if (timeRest < 0) timeRest = 0;
     this.setState({timeRest});
   };
   handleHandLengthChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({handLength: parseInt(e.target.value)});
+    this.setState({settings: {...this.state.settings, handLength: parseInt(e.target.value)}});
   };
   handleTileStyleChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({tileStyle: e.target.value as TileStyle});
+    this.setState({theme: {...this.state.theme, tileStyle: e.target.value as TileStyle}});
   };
   handleTileSuitChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({tileSuit: e.target.value as TileSuit});
+    this.setState({theme: {...this.state.theme, tileSuit: e.target.value as TileSuit}});
   };
   handleAllowPairsChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({allowPairs: e.target.value as AllowPairs});
+    this.setState({settings: {...this.state.settings, allowPairs: e.target.value as AllowPairs}});
   }
   handleTimeBeforeDrawChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({timeBeforeDraw: parseInt(e.target.value)});
+    this.setState({settings: {...this.state.settings, timeBeforeDraw: parseInt(e.target.value)}});
   };
   handleTimeBeforeSortChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({timeBeforeSort: parseInt(e.target.value)});
+    this.setState({settings: {...this.state.settings, timeBeforeSort: parseInt(e.target.value)}});
   };
   handleTimeOfGameChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
   {
-    this.setState({timeOfGame: parseInt(e.target.value)});
+    this.setState({settings: {...this.state.settings, timeOfGame: parseInt(e.target.value)}});
   };
   declareHu = () =>
   {
     return this.props.actions.declareHu({
-      validator: this.huValidator(),
-      next: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
-      timeBeforeDraw: this.state.timeBeforeDraw,
-      timeBeforeSort: this.state.timeBeforeSort,
+      validator: huValidator(this.state.settings.allowPairs),
+      next: newDeal(this.props.initializer, (() => new Date()), this.state.settings.handLength),
+      timeBeforeDraw: this.state.settings.timeBeforeDraw,
+      timeBeforeSort: this.state.settings.timeBeforeSort,
     });
   };
   directDiscardAndDraw = () =>
@@ -99,16 +138,16 @@ export class Game extends React.Component<GameProps, GameState>
   {
     return this.props.actions.discardAndDraw({
       position: position,
-      timeBeforeDraw: this.state.timeBeforeDraw,
-      timeBeforeSort: this.state.timeBeforeSort});
+      timeBeforeDraw: this.state.settings.timeBeforeDraw,
+      timeBeforeSort: this.state.settings.timeBeforeSort});
   };
   resetGame = () =>
   {
     return this.props.actions.resetGame({
-      first: newDeal(this.props.initializer, (() => new Date()), this.state.handLength),
-      timeBeforeDraw: this.state.timeBeforeDraw,
-      timeBeforeSort: this.state.timeBeforeSort,
-      timeOfGame: this.state.timeOfGame,
+      first: newDeal(this.props.initializer, (() => new Date()), this.state.settings.handLength),
+      timeBeforeDraw: this.state.settings.timeBeforeDraw,
+      timeBeforeSort: this.state.settings.timeBeforeSort,
+      timeOfGame: this.state.settings.timeOfGame,
     });
   };
   handleKeydown = (e: KeyboardEvent) =>
@@ -149,37 +188,10 @@ export class Game extends React.Component<GameProps, GameState>
     document.removeEventListener("keydown", this.handleKeydown);
     clearInterval(this.state.displayTime!);
   }
-  tileClass(): React.ComponentClass<TileProps>
-  {
-    switch (this.state.tileStyle)
-    {
-      case 'PostModern': switch (this.state.tileSuit)
-      {
-        case 'bamboos': return PostModernBamboos;
-        case 'characters': return PostModernCharacters;
-        case 'dots': return PostModernDots;
-      }
-      case 'GLMahjongTile': switch (this.state.tileSuit)
-      {
-        case 'bamboos': return GLMahjongTileBamboos;
-        case 'characters': return GLMahjongTileCharacters;
-        case 'dots': return GLMahjongTileDots;
-      }
-    }
-  }
-  huValidator(): Validator
-  {
-    switch (this.state.allowPairs)
-    {
-      case 'disallow': return isNormalHu;
-      case 'allow': return (hand) => isNormalHu(hand) || isPairs(hand);
-      case 'allow-hog': return (hand) => isNormalHu(hand) || isPairs(hand) || isPairsWithHog(hand);
-    }
-  }
   render()
   {
     return <>
-        <Hand tileClass={this.tileClass()} hand={this.props.deal.hand}
+        <Hand tileClass={tileClass(this.state.theme)} hand={this.props.deal.hand}
           discard={this.discardAndDraw} />
         <Controls
           score={this.props.score}
@@ -190,9 +202,9 @@ export class Game extends React.Component<GameProps, GameState>
           tileStyle={{handler: this.handleTileStyleChanged}}
           tileSuit={{handler: this.handleTileSuitChanged}}
           allowPairs={{handler: this.handleAllowPairsChanged}}
-          timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.timeBeforeDraw}}
-          timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.timeBeforeSort}}
-          timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.timeOfGame}}
+          timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.settings.timeBeforeDraw}}
+          timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.settings.timeBeforeSort}}
+          timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.settings.timeOfGame}}
         />
         <Status messages={this.props.messages} />
     </>;
