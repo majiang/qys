@@ -11,7 +11,7 @@ export function createLogic<
   Dependency extends object = {},
   Context extends Object = undefined,
   Action extends StandardAction<Type, Payload, Meta> = StandardAction<Type, Payload, Meta>,
->(actionCreator: ActionCreator<Payload>, config: {process: any, latest? : boolean}):
+>(actionCreator: ActionCreator<Payload>, config: {process: any, latest? : boolean, warnTimeout? : number}):
 Logic<State, any, any, Dependency, Context, Type>
 {
   return _createLogic<State, any, any, Dependency, Context, Type, Action>({

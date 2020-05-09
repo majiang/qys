@@ -21,3 +21,11 @@ export function shufflePile(): Pile
 }
 export const setSize = 3;
 export const pairSize = 2;
+export type Message = [number, string];
+export type Messages = Array<Message>;
+export function appendMessage(messages: Messages, newMessage: string): Messages
+{
+  if (messages.length === 0) return [[0, newMessage]];
+  const ret: Messages = [...messages, [messages[messages.length-1][0]+1, newMessage]];
+  return ret.slice(-4);
+}
