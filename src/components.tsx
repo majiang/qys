@@ -57,12 +57,21 @@ function tileClass(theme: Theme): React.ComponentClass<TileProps>
     }
   }
 }
+function tileHeight(theme: Theme): number
+{
+  switch (theme.tileStyle)
+  {
+    case 'PostModern': return 88;
+    case 'GLMahjongTile': return 91;
+  }
+}
 type GameState =
 {
   settings: Settings,
   theme: Theme,
   timeRest: number | null,
   displayTime: NodeJS.Timeout | null,
+  windowInnerWidth: number,
 };
 
 export class Game extends React.Component<GameProps, GameState>
@@ -84,7 +93,12 @@ export class Game extends React.Component<GameProps, GameState>
       },
       timeRest: null,
       displayTime: null,
+      windowInnerWidth: window.innerWidth,
     };
+  }
+  handleWindowResize = () => {
+    console.log(`windowInnerWidth: ${window.innerWidth}`);
+    this.setState({windowInnerWidth: window.innerWidth});
   }
   handleTimeRestChanged = () => {
     if (this.props.started == null)
@@ -182,17 +196,22 @@ export class Game extends React.Component<GameProps, GameState>
   {
     document.addEventListener("keydown", this.handleKeydown);
     this.setState({displayTime: setInterval(this.handleTimeRestChanged, 10)});
+    window.addEventListener('resize', this.handleWindowResize);
   }
   componentWillUnmount()
   {
     document.removeEventListener("keydown", this.handleKeydown);
     clearInterval(this.state.displayTime!);
+    window.removeEventListener('resize', this.handleWindowResize);
   }
   render()
   {
     return <>
-        <Hand tileClass={tileClass(this.state.theme)} hand={this.props.deal.hand}
-          discard={this.discardAndDraw} />
+        <Hand theme={this.state.theme} hand={this.props.deal.hand}
+          tileClass={tileClass(this.state.theme)}
+          maxTiles={this.state.settings.handLength+1}
+          discard={this.discardAndDraw}
+          width={this.state.windowInnerWidth} />
         <Controls
           score={this.props.score}
           time={this.state.timeRest}
@@ -214,20 +233,50 @@ export class Game extends React.Component<GameProps, GameState>
 type HandProps =
 {
   hand: gamecommon.Hand,
+  maxTiles: number,
+  theme: Theme,
   tileClass: React.ComponentClass<TileProps>,
   discard: (position: number) => void,
+  width: number,
 };
 class Hand extends React.Component<HandProps>
 {
+  constructor (props: HandProps)
+  {
+    super (props);
+  }
   renderTile(i: number, tile: gamecommon.Tile)
   {
     return (<this.props.tileClass key={tile} rank={gamecommon.rank(tile)} onClick={()=>this.props.discard(i)}/>);
   }
   render()
   {
-    return <div className="hand">
+    console.log(this.state);
+    return <HandOuter scale={this.props.width / (64 * this.props.maxTiles)} height={tileHeight(this.props.theme)}>
+      <HandInner width={64*this.props.maxTiles} scale={this.props.width / (64 * this.props.maxTiles)}>
         {this.props.hand.map((tile, i)=>this.renderTile(i, tile))}
-        </div>;
+        </HandInner></HandOuter>;
+  }
+}
+
+class HandOuter extends React.Component<{scale: number, height: number}>
+{
+  render()
+  {
+    return <div className="hand-container" style={{
+      height: `${this.props.scale * this.props.height}px`
+    }}>{this.props.children}</div>;
+  }
+}
+class HandInner extends React.Component<{width: number, scale: number}>
+{
+  render()
+  {
+    return <div className="hand" style={{
+      width: `${this.props.width}px`,
+      transformOrigin: 'top left',
+      transform: `scale(${this.props.scale})`,
+    }}>{this.props.children}</div>;
   }
 }
 

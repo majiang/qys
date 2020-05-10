@@ -23,6 +23,26 @@ code {
   src: url('/GL-MahjongTile-Clr.woff2') format('woff2');
 }
 
+.hand-container
+{
+  display: block;
+}
+.hand
+{
+  display: inline-block;
+  margin: 0 auto;
+}
+.controls
+{
+  margin: .5ex auto;
+  width: 24em;
+}
+.status
+{
+  margin: .5ex auto;
+  width: 24em;
+}
+
 div.tile.pm
 {
   position: relative;
