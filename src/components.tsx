@@ -1,8 +1,10 @@
 import React from 'react';
+import Modal from 'react-modal';
 import * as gamecommon from './gamecommon';
+import { GameState } from './gamelogics';
 import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
 import { gameActions } from './gamelogics';
-import { Deal, newDeal } from './deal';
+import { newDeal } from './deal';
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern" | "GLMahjongTile";
@@ -11,12 +13,8 @@ type TileSuit = "bamboos" | "characters" | "dots";
 type GameProps =
 {
   initializer: ()=>Array<number>,
-  deal: Deal,
   actions: typeof gameActions,
-  score: number | null,
-  started: Date | null,
-  messages: Array<[number, string]>
-};
+} & GameState;
 type Settings =
 {
   handLength: number,
@@ -25,6 +23,15 @@ type Settings =
   timeBeforeSort: number,
   timeOfGame: number,
 };
+function toString(settings: Settings): string
+{
+  return `${settings.handLength}${(
+    settings.allowPairs === 'disallow' ? '' :
+    settings.allowPairs === 'allow' ? 'p' : 'pp'
+  )} ${settings.timeOfGame/1000}/${settings.timeBeforeDraw/1000}` + (
+    settings.timeBeforeSort < settings.timeBeforeDraw ? `(${settings.timeBeforeSort/1000})` : ''
+  );
+}
 function huValidator(allowPairs: AllowPairs): Validator
 {
   switch (allowPairs)
@@ -65,7 +72,7 @@ function tileHeight(theme: Theme): number
     case 'GLMahjongTile': return 91;
   }
 }
-type GameState =
+type GameComponentState =
 {
   settings: Settings,
   theme: Theme,
@@ -74,7 +81,7 @@ type GameState =
   windowInnerWidth: number,
 };
 
-export class Game extends React.Component<GameProps, GameState>
+export class Game extends React.Component<GameProps, GameComponentState>
 {
   constructor (props: GameProps)
   {
@@ -101,10 +108,11 @@ export class Game extends React.Component<GameProps, GameState>
     this.setState({windowInnerWidth: window.innerWidth});
   }
   handleTimeRestChanged = () => {
-    if (this.props.started == null)
+    if (this.props.game.kind !== 'playing')
       return;
-    let timeRest = this.props.started.valueOf() + this.state.settings.timeOfGame - new Date().valueOf();
-    if (timeRest < 0) timeRest = 0;
+    let timeRest = this.props.game.started.valueOf() + this.state.settings.timeOfGame - new Date().valueOf();
+    if (timeRest < 0)
+      timeRest = 0;
     this.setState({timeRest});
   };
   handleHandLengthChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -135,6 +143,14 @@ export class Game extends React.Component<GameProps, GameState>
   {
     this.setState({settings: {...this.state.settings, timeOfGame: parseInt(e.target.value)}});
   };
+/*  handleOpenModal = () =>
+  {
+    this.setState({openModal: true});
+  }
+  handleCloseModal = () =>
+  {
+    this.setState({openModal: false});
+  }*/
   declareHu = () =>
   {
     return this.props.actions.declareHu({
@@ -146,7 +162,8 @@ export class Game extends React.Component<GameProps, GameState>
   };
   directDiscardAndDraw = () =>
   {
-    return this.discardAndDraw(this.props.deal.hand.length - 1);
+    if (this.props.game.kind !== 'playing') throw new TypeError();
+    return this.discardAndDraw(this.props.game.deal.hand.length - 1);
   };
   discardAndDraw = (position: number) =>
   {
@@ -164,6 +181,10 @@ export class Game extends React.Component<GameProps, GameState>
       timeOfGame: this.state.settings.timeOfGame,
     });
   };
+  nullGame = () =>
+  {
+    return this.props.actions.nullGame({});
+  }
   handleKeydown = (e: KeyboardEvent) =>
   {
     if (e.keyCode === 32) // space: hu
@@ -181,10 +202,11 @@ export class Game extends React.Component<GameProps, GameState>
       return this.resetGame();
     }
     if (58 <= e.keyCode) return;
+    if (this.props.game.kind !== 'playing') throw new TypeError();
     console.log(`keyCode: ${e.keyCode}`);
     let rank = e.keyCode - 49;
     console.log(`rank: ${rank}`);
-    let position = this.props.deal.hand.findIndex((tile, index) => {
+    let position = this.props.game.deal.hand.findIndex((tile, index) => {
       console.log(`${index}: ${tile}`);
       return (gamecommon.rank(tile) === rank);
     });
@@ -206,14 +228,22 @@ export class Game extends React.Component<GameProps, GameState>
   }
   render()
   {
+    console.log(this.props);
+    console.log(this.state);
     return <>
-        <Hand theme={this.state.theme} hand={this.props.deal.hand}
+        <Hand theme={this.state.theme} hand={
+            this.props.game.kind === 'playing'
+            ? this.props.game.deal.hand
+            : []}
           tileClass={tileClass(this.state.theme)}
           maxTiles={this.state.settings.handLength+1}
           discard={this.discardAndDraw}
           width={this.state.windowInnerWidth} />
         <Controls
-          score={this.props.score}
+          score={
+            this.props.game.kind === 'null'
+            ? null
+            : this.props.game.score}
           time={this.state.timeRest}
           hu={this.declareHu}
           reset={this.resetGame}
@@ -226,6 +256,14 @@ export class Game extends React.Component<GameProps, GameState>
           timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.settings.timeOfGame}}
         />
         <Status messages={this.props.messages} />
+        <ResultDialog
+          close={this.nullGame}
+          isOpen={this.props.game.kind === 'finished'}
+          score={~~((this.props.game.kind === 'null'
+            ? 0
+            : this.props.game.score) * 1000)}
+          settings={toString(this.state.settings)}
+        ></ResultDialog>
     </>;
   }
 }
@@ -241,10 +279,6 @@ type HandProps =
 };
 class Hand extends React.Component<HandProps>
 {
-  constructor (props: HandProps)
-  {
-    super (props);
-  }
   renderTile(i: number, tile: gamecommon.Tile)
   {
     return (<this.props.tileClass key={tile} rank={gamecommon.rank(tile)} onClick={()=>this.props.discard(i)}/>);
@@ -440,7 +474,7 @@ class Controls extends React.Component<ControlsProps>
   {
     return <div className="status-labels">
       <div className="status-label">{(this.props.score == null) ? `` : `score: ${~~(this.props.score * 1000)}`}</div>
-      <div className="status-label">{(this.props.time == null) ? `` : `time: ${this.props.time.toFixed(2)}`}</div>
+      <div className="status-label">{(this.props.time == null) ? `` : `time: ${(this.props.time/1000).toFixed(2)}`}</div>
     </div>;
   }
   renderStartButton()
@@ -638,6 +672,33 @@ class HuButton extends React.Component<{onClick: ()=>void}>
   render()
   {
     return <div className="hu-button" onClick={this.props.onClick}><span className="hu-text">Hu</span></div>;
+  }
+}
+type ResultDialogProps = {
+  close: () => void,
+  isOpen: boolean,
+  score: number,
+  settings: string,
+};
+class ResultDialog extends React.Component<ResultDialogProps>
+{
+  renderText(): string
+  {
+    return encodeURIComponent(`Score: ${this.props.score} (settings: ${this.props.settings})`);
+  }
+  render()
+  {
+    return <Modal
+      isOpen={this.props.isOpen}
+      shouldCloseOnOverlayClick={true}
+      className='result-content'
+      overlayClassName='result-overlay'
+      ><div className='result-score'>Your score: {this.props.score}</div>
+      <div className='result-controls'>
+        <div className='result-close' onClick={this.props.close}>Close</div>
+        <a className='result-tweet' href={`https://twitter.com/intent/tweet?text=${this.renderText()}&url=https%3A%2F%2Fmajiang.github.io%2Fmj%2Fqys%2F&hashtags=qysmj&related=__DaLong`}><div>Tweet</div></a>
+      </div>
+    </Modal>;
   }
 }
 

@@ -180,3 +180,53 @@ fieldset > input[type="radio"]
 {
   display: none;
 }
+
+.result-content, .result-overlay
+{
+  position: fixed;
+}
+.result-content
+{
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  right: auto;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+  width: 24em;
+  height: 5em;
+  background-color: rgba(255, 255, 255, 1.0);
+}
+.result-overlay
+{
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: rgba(204, 204, 204, 0.75);
+}
+.result-score, .result-controls
+{
+  width: 20em;
+  height: 2em;
+  margin-left: 2em;
+  margin-right: 2em;
+  margin-bottom: 0;
+  margin-top: 0;
+}
+.result-close, a.result-tweet div
+{
+  border: 1px solid var(--dark-color);
+  color: var(--dark-color);
+  font-weight: bold;
+  box-sizing: border-box;
+  width: 10em;
+  height: 2em;
+  display: inline-block;
+  text-align: center;
+}
+a.result-tweet
+{
+  display: inline-block;
+  text-decoration: none;
+}

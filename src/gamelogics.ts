@@ -5,22 +5,49 @@ import { applyMiddleware, createStore, AnyAction } from 'redux';
 import { actionCreatorFactory } from 'typescript-fsa';
 import { reducerWithInitialState } from 'typescript-fsa-reducers';
 import { fromTiles, Validator } from './hu';
-import { Deal, nullDeal, discardTile, drawTile, dealHand, sortHand } from './deal';
+import { Deal, discardTile, drawTile, dealHand, sortHand } from './deal';
 import { Messages, appendMessage } from './gamecommon';
 const actionCreator = actionCreatorFactory();
 
-type GameState = {
+type NullGame =
+{
+  kind: 'null',
+};
+type PlayingGame =
+{
+  kind: 'playing',
   deal: Deal,
   score: number,
-  started: Date | null,
+  started: Date,
+};
+type FinishedGame =
+{
+  kind: 'finished',
+  score: number,
+};
+
+export type GameState = {
+  game: NullGame | PlayingGame | FinishedGame,
   messages: Messages,
 };
-const nullGame: GameState = {
-  deal: nullDeal,
-  score: 0,
-  started: null,
+const nullGame: GameState =
+{
+  game: {kind: 'null'},
   messages: [],
 };
+function transitionPlaying(f: (deal: Deal) => Deal): (state: GameState) => GameState
+{
+  return (state: GameState) =>
+  {
+    if (state.game.kind !== 'playing')
+      throw new TypeError();
+    return {...state,
+      game: {...state.game,
+        deal: f(state.game.deal),
+      }
+    }
+  }
+}
 
 export const gameActions = {
   appendMessage: actionCreator<{message: string}>('appendMessage'),
@@ -28,50 +55,72 @@ export const gameActions = {
   draw: actionCreator<{}>('draw'),
   discardAndDraw: actionCreator<{position: number, timeBeforeDraw: number, timeBeforeSort: number}>('discardAndDraw'),
   declareHu: actionCreator<{next: Deal, validator: Validator, timeBeforeDraw: number, timeBeforeSort: number}>('declareHu'),
-  reset: actionCreator<{deal: Deal}>('reset'),
-  resetAndDraw: actionCreator<{deal: Deal, timeBeforeDraw: number, timeBeforeSort: number}>('resetAndDraw'),
+  deal: actionCreator<{deal: Deal}>('deal'),
+  dealAndDraw: actionCreator<{deal: Deal, timeBeforeDraw: number, timeBeforeSort: number}>('dealAndDraw'),
   resetGame: actionCreator<({first: Deal, timeBeforeDraw: number, timeBeforeSort: number, timeOfGame: number})>('resetGame'),
-  newGame: actionCreator<({started: Date})>('newGame'),
+  newGame: actionCreator<({deal: Deal})>('newGame'),
+  newGameAndDraw: actionCreator<({deal: Deal, timeBeforeDraw: number, timeBeforeSort: number})>('newGameAndDraw'),
   sort: actionCreator<{}>('sort'),
   sortAndDraw: actionCreator<{timeBetweenSortDraw: number}>('sortAndDraw'),
   scoreHu: actionCreator<{time: Date, tbd: number}>('scoreHu'),
   scoreCuohu: actionCreator<{}>('scoreCuohu'),
   finish: actionCreator<{}>('finish'),
-}
+  nullGame: actionCreator<{}>('nullGame'),
+};
 
 const gameReducer = reducerWithInitialState(nullGame)
-.case(gameActions.discard, (state, payload) => ({...state,
-  deal: discardTile(state.deal, payload.position),
-}))
-.case(gameActions.draw, (state, _) => ({...state,
-  deal: drawTile(state.deal),
-}))
-.case(gameActions.reset, (state, payload) => ({...state,
-  deal: dealHand(payload.deal),
-}))
-.case(gameActions.sort, (state, _) => ({...state,
-  deal: sortHand(state.deal),
-}))
-.case(gameActions.newGame, (_, payload) => ({...nullGame,
-  started: payload.started,
-  messages: appendMessage([], `new game started at ${payload.started}`),
+.case(gameActions.discard, (state, payload) =>
+  transitionPlaying((deal) => discardTile(deal, payload.position))(state)
+)
+.case(gameActions.draw, (state, _) =>
+  transitionPlaying(drawTile)(state)
+)
+.case(gameActions.deal, (state, payload) =>
+  transitionPlaying((deal) => dealHand(payload.deal))(state)
+)
+.case(gameActions.sort, (state, _) =>
+  transitionPlaying(sortHand)(state)
+)
+.case(gameActions.newGame, (_, payload) => ({
+  game:
+  {
+    kind: 'playing',
+    deal: payload.deal,
+    score: 0,
+    started: payload.deal.started
+  },
+  messages: appendMessage([], `new game started at ${payload.deal.started}`),
 }))
 .case(gameActions.appendMessage, (state, payload) => ({...state,
   messages: appendMessage(state.messages, payload.message)
 }))
-.case(gameActions.scoreHu, (state, payload) => ({...state,
-  score: state.score + Math.sqrt(payload.tbd / (payload.time.valueOf() - state.deal.started!.valueOf())),
-}))
-.case(gameActions.scoreCuohu, (state, _) => ({...state,
-  score: state.score - 1,
-}))
+.case(gameActions.scoreHu, (state, payload) => {
+  if (state.game.kind !== 'playing') throw new TypeError();
+  return {...state,
+    game: {...state.game,
+      score: state.game.score + Math.sqrt(payload.tbd / (payload.time.valueOf() - state.game.deal.started.valueOf())),
+    }
+  };
+})
+.case(gameActions.scoreCuohu, (state, _) => {
+  if (state.game.kind !== 'playing') throw new TypeError();
+  return {...state,
+    game: {...state.game,
+      score: state.game.score - 1
+    }};
+})
 .case(gameActions.finish, (state, payload) => {
+  if (state.game.kind !== 'playing') throw new TypeError();
   console.log(`finish at: ${new Date()}`);
   console.log(state);
   console.log(payload);
-  return {...nullGame,
-  messages: appendMessage([], `finish! score: ${~~(state.score * 1000)}`),
+  return {game: {kind: 'finished', score: state.game.score}, messages:
+  appendMessage([], `finish! score: ${~~(state.game.score * 1000)}`),
 };})
+.case(gameActions.nullGame, (state, _) => ({
+  ...state,
+  game: {kind: 'null'}
+}))
 ;
 
 function dispatchWaitDispatch(firstAction: AnyAction, waitTimeMs: number, secondAction: AnyAction, dispatch: Dispatch, done: Done)
@@ -105,17 +154,17 @@ const discardAndDrawLogic = createLogic<GameState, PayloadOf<typeof gameActions.
         dispatch, done);
     }
   });
-const resetAndDrawLogic = createLogic(
-  gameActions.resetAndDraw,
+const dealAndDrawLogic = createLogic(
+  gameActions.dealAndDraw,
   {
-    process({ action }: { action: ActionOf<typeof gameActions.resetAndDraw> }, dispatch: Dispatch, done: Done)
+    process({ action }: { action: ActionOf<typeof gameActions.dealAndDraw> }, dispatch: Dispatch, done: Done)
     {
       console.log(action);
       const [waitTimeMs, nextAction] = (action.payload.timeBeforeSort <= action.payload.timeBeforeDraw)
         ? [action.payload.timeBeforeSort, gameActions.sortAndDraw({timeBetweenSortDraw: action.payload.timeBeforeDraw - action.payload.timeBeforeSort})]
         : [action.payload.timeBeforeDraw, gameActions.draw({})];
       dispatchWaitDispatch(
-        gameActions.reset({deal: action.payload.deal}),
+        gameActions.deal({deal: action.payload.deal}),
         waitTimeMs, nextAction,
         dispatch, done);
     }
@@ -132,6 +181,22 @@ const sortAndDrawLogic = createLogic(
         dispatch, done);
     }
   });
+const newGameAndDrawLogic = createLogic(
+  gameActions.newGameAndDraw,
+  {
+    process({ action }: { action: ActionOf<typeof gameActions.newGameAndDraw> }, dispatch: Dispatch, done: Done)
+    {
+      const [waitTimeMs, nextAction] = (action.payload.timeBeforeSort <= action.payload.timeBeforeDraw)
+        ? [action.payload.timeBeforeSort, gameActions.sortAndDraw({timeBetweenSortDraw: action.payload.timeBeforeDraw - action.payload.timeBeforeSort})]
+        : [action.payload.timeBeforeDraw, gameActions.draw({})];
+      dispatchWaitDispatch(
+        gameActions.newGame({deal: action.payload.deal}),
+        waitTimeMs,
+        nextAction,
+        dispatch, done);
+    }
+  }
+);
 const resetGamelogic = createLogic(
   gameActions.resetGame,
   {
@@ -140,9 +205,8 @@ const resetGamelogic = createLogic(
     process({ action }: { action: ActionOf<typeof gameActions.resetGame> }, dispatch: Dispatch, done: Done)
     {
       console.log(action.payload);
-      dispatch(gameActions.newGame({started: action.payload.first.started!}));
       dispatchWaitDispatch(
-        gameActions.resetAndDraw({
+        gameActions.newGameAndDraw({
           deal: action.payload.first,
           timeBeforeDraw: action.payload.timeBeforeDraw,
           timeBeforeSort: action.payload.timeBeforeSort,
@@ -158,14 +222,16 @@ const declareHuLogic = createLogic(
   {
     process({ action, getState }: { action: ActionOf<typeof gameActions.declareHu>, getState: () => GameState }, dispatch: Dispatch, done: Done)
     {
-      const hu = action.payload.validator(fromTiles(getState().deal.hand));
+      const state = getState();
+      if (state.game.kind !== 'playing') throw new TypeError();
+      const hu = action.payload.validator(fromTiles(state.game.deal.hand));
       const firstAction = hu
-        ? gameActions.scoreHu({time: action.payload.next.started!, tbd: action.payload.timeBeforeDraw})
+        ? gameActions.scoreHu({time: action.payload.next.started, tbd: action.payload.timeBeforeDraw})
         : gameActions.scoreCuohu({});
       dispatchSequence([
         firstAction,
         gameActions.appendMessage({message: `declared ${hu} hu`}),
-        gameActions.resetAndDraw({
+        gameActions.dealAndDraw({
           deal: action.payload.next,
           timeBeforeDraw: action.payload.timeBeforeDraw,
           timeBeforeSort: action.payload.timeBeforeSort,
@@ -174,8 +240,10 @@ const declareHuLogic = createLogic(
   });
 const logics = [
   discardAndDrawLogic,
-  resetAndDrawLogic,
+  dealAndDrawLogic,
   resetGamelogic,
   sortAndDrawLogic,
-  declareHuLogic];
+  declareHuLogic,
+  newGameAndDrawLogic,
+];
 export const gameStore = createStore(gameReducer, applyMiddleware(createLogicMiddleware(logics)));

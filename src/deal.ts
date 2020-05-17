@@ -1,17 +1,10 @@
-import { Hand, Pile, shufflePile } from './gamecommon';
+import { Hand, Pile } from './gamecommon';
 export type Deal =
 {
   hand: Hand,
   p: number,
   pile: Pile,
-  started: Date | null,
-};
-export const nullDeal: Deal =
-{
-  hand: [],
-  p: 0,
-  pile: [],
-  started: null,
+  started: Date,
 };
 export function discardTile(deal: Deal, position: number)
 {
@@ -49,9 +42,10 @@ export function sortHand(deal: Deal): Deal
 }
 export function newDeal(shuffle: () => Pile, date: () => Date, p: number): Deal
 {
-  const pile = shufflePile();
+  const pile = shuffle();
   const started = date();
-  return dealHand({...nullDeal,
+  return dealHand({
+    hand: [],
     p,
     pile,
     started,
