@@ -686,7 +686,10 @@ class ResultDialog extends React.Component<ResultDialogProps>
 {
   renderText(): string
   {
-    return encodeURIComponent(`Score: ${this.props.score} (settings: ${this.props.settings})`);
+    return encodeURIComponent(
+      `Score: ${this.props.score} (settings: ${this.props.settings}` +
+      (window.location.hash === '' ? '' : `, seed: ${window.location.hash.substr(1)}`) + ')'
+    );
   }
   render()
   {
