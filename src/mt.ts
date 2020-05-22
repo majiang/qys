@@ -70,7 +70,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
-class MersenneTwister{
+export class MersenneTwister{
 
  /* Period parameters */
  private N = 624;
@@ -109,7 +109,8 @@ class MersenneTwister{
   /* init_key is the array for initializing keys */
   /* key_length is its length */
   /* slight change for C++, 2004/2/26 */
-  init_by_array(init_key, key_length) {
+  init_by_array(init_key: Array<number>) {
+    const key_length = init_key.length;
     var i, j, k;
     this.init_genrand(19650218);
     i=1; j=0;
