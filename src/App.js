@@ -3,7 +3,7 @@ import { connect, Provider } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Game } from './components';
 import { gameActions, gameStore } from './gamelogics';
-import { shufflePile } from './gamecommon';
+import { pileShuffler, MT19937 } from './gamecommon';
 import './App.css';
 
 const ConnectedGame = connect(
@@ -12,6 +12,7 @@ const ConnectedGame = connect(
 )(Game);
 
 function App() {
+  let shufflePile = pileShuffler(window.location.hash === '' ? Math : MT19937(window.location.hash));
   return (
     <Provider store={gameStore}>
       <ConnectedGame initializer={shufflePile} />

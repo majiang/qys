@@ -183,6 +183,8 @@ export class Game extends React.Component<GameProps, GameComponentState>
   };
   nullGame = () =>
   {
+    if (window.location.hash !== '')
+      window.location.hash = '';
     return this.props.actions.nullGame({});
   }
   handleKeydown = (e: KeyboardEvent) =>

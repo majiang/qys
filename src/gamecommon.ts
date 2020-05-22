@@ -1,3 +1,5 @@
+import { sha512 } from "js-sha512";
+import { MersenneTwister } from "./mt";
 export type Hand = Array<number>;
 export type Pile = Array<number>;
 export type Tile = number;
@@ -8,16 +10,29 @@ export function rank(tile: Tile): number
 {
     return ~~(tile/duplicates);
 }
-export function shufflePile(): Pile
+interface Random
 {
-  let m = deck;
-  let pile = Array.from(Array(m).keys());
-  while (m)
+  random(): number;
+}
+export function pileShuffler(random: Random)
+{
+  return () =>
   {
-    const i = Math.floor(Math.random() * (m--));
-    [pile[i], pile[m]] = [pile[m], pile[i]];
-  }
-  return pile;
+    let m = deck;
+    let pile = Array.from(Array(m).keys());
+    while (m)
+    {
+      const i = Math.floor(random.random() * (m--));
+      [pile[i], pile[m]] = [pile[m], pile[i]];
+    }
+    return pile;
+  };
+}
+export function MT19937(seed: string)
+{
+  let mt = new MersenneTwister();
+  mt.init_by_array(sha512.digest(seed + '#QYSMJ'));
+  return mt;
 }
 export const setSize = 3;
 export const pairSize = 2;
