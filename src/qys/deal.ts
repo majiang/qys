@@ -1,4 +1,4 @@
-import { Hand, Pile } from './gamecommon';
+import { Hand, Pile } from './common';
 export type Deal =
 {
   hand: Hand,

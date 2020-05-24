@@ -1,10 +1,12 @@
 import React from 'react';
 import Modal from 'react-modal';
-import * as gamecommon from './gamecommon';
-import { GameState } from './gamelogics';
-import { isNormalHu, isPairs, isPairsWithHog, Validator } from './hu';
-import { gameActions } from './gamelogics';
-import { newDeal } from './deal';
+import * as gamecommon from './qys/common';
+import { GameState } from './qys/gamelogics';
+import { isNormalHu, isPairs, isPairsWithHog, Validator } from './qys/hu';
+import { gameActions } from './qys/gamelogics';
+import { newDeal } from './qys/deal';
+
+Modal.setAppElement('#root');
 
 type AllowPairs = "disallow" | "allow" | "allow-hog";
 type TileStyle = "PostModern" | "GLMahjongTile";
@@ -283,7 +285,7 @@ class Hand extends React.Component<HandProps>
 {
   renderTile(i: number, tile: gamecommon.Tile)
   {
-    return (<this.props.tileClass key={tile} rank={gamecommon.rank(tile)} onClick={()=>this.props.discard(i)}/>);
+    return <this.props.tileClass key={tile} rank={gamecommon.rank(tile)} onClick={()=>this.props.discard(i)}/>;
   }
   render()
   {
@@ -329,7 +331,7 @@ class Tile extends React.Component<TileProps>
     return <div className={`tile ${this.tileClass()}`} onClick={this.props.onClick}>
       <img src={this.imageUrl()}
       style={this.generateStyle(this.props.rank)}
-      alt={(this.props.rank+1).toString()}/></div>
+      alt={(this.props.rank+1).toString()}/></div>;
   }
   tileClass(): string
   {

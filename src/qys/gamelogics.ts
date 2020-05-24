@@ -1,12 +1,12 @@
 import { createLogicMiddleware } from 'redux-logic';
-import { createLogic } from './redux-logic-helper';
+import { createLogic } from '../redux-logic-helper';
 import { Dispatch, Done, ActionOf, PayloadOf } from 'redux-logic-helper';
 import { applyMiddleware, createStore, AnyAction } from 'redux';
 import { actionCreatorFactory } from 'typescript-fsa';
 import { reducerWithInitialState } from 'typescript-fsa-reducers';
 import { fromTiles, Validator } from './hu';
 import { Deal, discardTile, drawTile, dealHand, sortHand } from './deal';
-import { Messages, appendMessage } from './gamecommon';
+import { Messages, appendMessage } from './common';
 const actionCreator = actionCreatorFactory();
 
 type NullGame =

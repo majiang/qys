@@ -2,8 +2,8 @@ import React from 'react';
 import { connect, Provider } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Game } from './components';
-import { gameActions, gameStore } from './gamelogics';
-import { pileShuffler, MT19937 } from './gamecommon';
+import { gameActions, gameStore } from './qys/gamelogics';
+import { pileShuffler, MT19937 } from './qys/common';
 import './App.css';
 
 const ConnectedGame = connect(

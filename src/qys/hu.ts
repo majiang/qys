@@ -1,5 +1,5 @@
-import * as gamecommon from './gamecommon';
-import { range } from './misc/common';
+import * as gamecommon from './common';
+import { range } from '../misc/common';
 
 export function fromTiles(hand: gamecommon.Hand): Array<number>
 {
