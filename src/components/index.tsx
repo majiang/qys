@@ -1,10 +1,10 @@
 import React from 'react';
 import Modal from 'react-modal';
-import * as gamecommon from './qys/common';
-import { GameState } from './qys/gamelogics';
-import { isNormalHu, isPairs, isPairsWithHog, Validator } from './qys/hu';
-import { gameActions } from './qys/gamelogics';
-import { newDeal } from './qys/deal';
+import * as gamecommon from '../qys/common';
+import { GameState } from '../qys/gamelogics';
+import { isNormalHu, isPairs, isPairsWithHog, Validator } from '../qys/hu';
+import { gameActions } from '../qys/gamelogics';
+import { newDeal } from '../qys/deal';
 
 Modal.setAppElement('#root');
 
