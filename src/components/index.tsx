@@ -61,8 +61,8 @@ type GameComponentState =
 {
   settings: Settings,
   theme: Theme,
-  timeRest: number | null,
-  displayTime: NodeJS.Timeout | null,
+  timeRest?: number,
+  displayTime?: NodeJS.Timeout,
   windowInnerWidth: number,
 };
 
@@ -83,8 +83,6 @@ export class Game extends React.Component<GameProps, GameComponentState>
         tileStyle: "PostModern",
         tileSuit: "dots",
       },
-      timeRest: null,
-      displayTime: null,
       windowInnerWidth: window.innerWidth,
     };
   }
@@ -128,14 +126,6 @@ export class Game extends React.Component<GameProps, GameComponentState>
   {
     this.setState({settings: {...this.state.settings, timeOfGame: parseInt(e.target.value)}});
   };
-/*  handleOpenModal = () =>
-  {
-    this.setState({openModal: true});
-  }
-  handleCloseModal = () =>
-  {
-    this.setState({openModal: false});
-  }*/
   declareHu = () =>
   {
     return this.props.actions.declareHu({
@@ -226,22 +216,28 @@ export class Game extends React.Component<GameProps, GameComponentState>
           maxTiles={this.state.settings.handLength+1}
           discard={this.discardAndDraw}
           width={this.state.windowInnerWidth} />
-        <Controls
-          score={
-            this.props.game.kind === 'null'
-            ? null
-            : this.props.game.score}
-          time={this.state.timeRest}
-          hu={this.declareHu}
-          reset={this.resetGame}
-          handLength={{handler: this.handleHandLengthChanged}}
-          tileStyle={{handler: this.handleTileStyleChanged}}
-          tileSuit={{handler: this.handleTileSuitChanged}}
-          allowPairs={{handler: this.handleAllowPairsChanged}}
-          timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.settings.timeBeforeDraw}}
-          timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.settings.timeBeforeSort}}
-          timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.settings.timeOfGame}}
-        />
+        <Controls>
+          <ButtonAndStatus score={
+              this.props.game.kind === 'null'
+              ? undefined
+              : this.props.game.score}
+            time={this.state.timeRest}
+            hu={this.declareHu}
+            reset={this.resetGame}/>
+          <RulesRadios
+            handLength={{handler: this.handleHandLengthChanged}}
+            allowPairs={{handler: this.handleAllowPairsChanged}}
+          />
+          <TimingsRanges
+              timeBeforeDraw={{handler: this.handleTimeBeforeDrawChanged, value: this.state.settings.timeBeforeDraw}}
+              timeBeforeSort={{handler: this.handleTimeBeforeSortChanged, value: this.state.settings.timeBeforeSort}}
+              timeOfGame={{handler: this.handleTimeOfGameChanged, value: this.state.settings.timeOfGame}}
+          />
+          <ThemeControls
+              tileStyleHandler={this.handleTileStyleChanged}
+              tileSuitHandler={this.handleTileSuitChanged}
+          />
+        </Controls>
         <Status messages={this.props.messages} />
         <ResultDialog
           close={this.nullGame}
@@ -252,6 +248,158 @@ export class Game extends React.Component<GameProps, GameComponentState>
           settings={toString(this.state.settings)}
         ></ResultDialog>
     </>;
+  }
+}
+class ButtonAndStatus extends React.Component<{
+  hu: () => void,
+  score?: number,
+  time?: number,
+  reset: () => void,
+}>
+{
+  renderHuButton()
+  {
+    return <HuButton onClick={this.props.hu} />;
+  }
+  renderStatus()
+  {
+    return <div className="status-labels">
+      <div className="status-label">{(this.props.score == null) ? `` : `score: ${~~(this.props.score * 1000)}`}</div>
+      <div className="status-label">{(this.props.time == null) ? `` : `time: ${(this.props.time/1000).toFixed(2)}`}</div>
+    </div>;
+  }
+  renderStartButton()
+  {
+    return <StartButton onClick={this.props.reset} />;
+  }
+  render()
+  {
+    return <>
+    {this.renderHuButton()}
+    {this.renderStatus()}
+    {this.renderStartButton()}</>;
+}
+}
+class RulesRadios extends React.Component<{
+  handLength: HasHandler,
+  allowPairs: HasHandler,
+}>
+{
+  render()
+  {
+    return <>
+      {this.renderHandLength()}
+      {this.renderAllowPairs()}</>;
+  }
+  renderHandLength()
+  {
+    return <LabeledRadios name="hand-length"
+        labelText="#tiles"
+        choices={[1, 4, 7, 10, 13, 16].map((v) =>
+            ({display: formatDigits(v, 2), value: v}))}
+        defaultValue={13}
+        handler={this.props.handLength.handler} />;
+  }
+  renderAllowPairs()
+  {
+    return <LabeledRadios name="allow-pairs"
+        labelText="pairs"
+        choices={[
+            {display: "disallow", value: "disallow"},
+            {display: "allow", value: "allow"},
+            {display: "tile hog", value: "allow-hog"}]}
+        defaultValue="allow"
+        handler={this.props.allowPairs.handler} />;
+  }
+}
+class TimingsRanges extends React.Component<{
+  timeBeforeDraw: HasHandlerAndValue,
+  timeBeforeSort: HasHandlerAndValue,
+  timeOfGame: HasHandlerAndValue,
+}>
+{
+  render()
+  {
+    return <>
+        {this.renderTimeBeforeDraw()}
+        {this.renderTimeBeforeSort()}
+        {this.renderTimeOfGame()}</>;
+  }
+  renderTimeBeforeDraw()
+  {
+    return <fieldset><Range
+        id="time-before-draw"
+        label="time before draw"
+        handler={this.props.timeBeforeDraw.handler}
+        value={{
+          min: 100,
+          max: 9900,
+          step: 100,
+          default: 1000,
+          display: (this.props.timeBeforeDraw.value/1000).toFixed(1)+"s",
+        }} /></fieldset>;
+  }
+  renderTimeBeforeSort()
+  {
+    return <fieldset><Range
+        id="time-before-sort"
+        label="time before sort"
+        handler={this.props.timeBeforeSort.handler}
+        value={{
+          min: 0,
+          max: 9900,
+          step: 100,
+          default: 500,
+          display: (this.props.timeBeforeSort.value/1000).toFixed(1)+"s",
+        }} /></fieldset>
+  }
+  renderTimeOfGame()
+  {
+    return <fieldset><Range
+        id="time-of-game"
+        label="time of game"
+        handler={this.props.timeOfGame.handler}
+        value={{
+          min: 30000,
+          max: 600000,
+          step: 1000,
+          default: 60000,
+          display: <>{formatDigits(this.props.timeOfGame.value/1000, 3)}s</>,
+        }}
+    /></fieldset>;
+  }
+}
+class ThemeControls extends React.Component<{
+  tileStyleHandler: Handler,
+  tileSuitHandler: Handler,
+}>
+{
+  render()
+  {
+    return <>
+        {this.renderTileStyle()}
+        {this.renderTileSuit()}</>;
+  }
+  renderTileStyle()
+  {
+    return <LabeledRadios name="tile-style"
+        labelText="tile style"
+        choices={[
+            {display: "PostModern", value: "PostModern"},
+            {display: "GL-MT", value: "GLMahjongTile"}]}
+        defaultValue="PostModern"
+        handler={this.props.tileStyleHandler} />;
+  }
+  renderTileSuit()
+  {
+    return <LabeledRadios name="tile-suit"
+        labelText="suit"
+        choices={[
+            {display: "bams/索/条", value: "bamboos"},
+            {display: "chars/萬/万", value: "characters"},
+            {display: "dots/筒/饼", value: "dots"}]}
+        defaultValue="dots"
+        handler={this.props.tileSuitHandler} />;
   }
 }
 
@@ -325,154 +473,41 @@ type HasHandlerAndValue =
   handler: Handler,
   value: any,
 }
-type ControlsProps =
-{
-  reset: () => void,
-  hu: () => void,
-  score: number | null,
-  time: number | null,
-  handLength: HasHandler,
-  tileStyle: HasHandler,
-  tileSuit: HasHandler,
-  allowPairs: HasHandler,
-  timeBeforeDraw: HasHandlerAndValue,
-  timeBeforeSort: HasHandlerAndValue,
-  timeOfGame: HasHandlerAndValue,
-};
 
-class Controls extends React.Component<ControlsProps>
+class Controls extends React.Component
 {
-  renderHuButton()
-  {
-    return <HuButton onClick={this.props.hu} />;
-  }
-  renderStatus()
-  {
-    return <div className="status-labels">
-      <div className="status-label">{(this.props.score == null) ? `` : `score: ${~~(this.props.score * 1000)}`}</div>
-      <div className="status-label">{(this.props.time == null) ? `` : `time: ${(this.props.time/1000).toFixed(2)}`}</div>
-    </div>;
-  }
-  renderStartButton()
-  {
-    return <StartButton onClick={this.props.reset} />;
-  }
-  renderHandLength()
-  {
-    return <fieldset className="hand-length">
-        <span className="radio-label">#tiles</span>
-        <Radios choices={[1, 4, 7, 10, 13, 16].map((v) =>
-          ({display: formatDigits(v, 2), value: v}))}
-          name="hand-length"
-          defaultValue={13}
-          onChange={this.props.handLength.handler} />
-        </fieldset>;
-  }
-  renderTileStyle()
-  {
-    return <fieldset className="tile-style">
-        <span className="radio-label">tile style</span>
-        <Radios choices={[
-          {display: "PostModern", value: "PostModern"},
-          {display: "GL-MT", value: "GLMahjongTile"}]}
-          name="tile-style"
-          defaultValue="PostModern"
-          onChange={this.props.tileStyle.handler} />
-        </fieldset>;
-  }
-  renderTileSuit()
-  {
-    return <fieldset className="tile-suit">
-        <span className="radio-label">suit</span>
-        <Radios choices={[
-          {display: "bams/索/条", value: "bamboos"},
-          {display: "chars/萬/万", value: "characters"},
-          {display: "dots/筒/饼", value: "dots"}]}
-          name="tile-suit"
-          defaultValue="dots"
-          onChange={this.props.tileSuit.handler} />
-        </fieldset>;
-  }
-  renderAllowPairs()
-  {
-    return <fieldset className="allow-pairs">
-        <span className="radio-label">pairs</span>
-        <Radios choices={[
-          {display: "disallow", value: "disallow"},
-          {display: "allow", value: "allow"},
-          {display: "tile hog", value: "allow-hog"}]}
-          name="allow-pairs"
-          defaultValue="allow"
-          onChange={this.props.allowPairs.handler} />
-        </fieldset>;
-  }
-  renderTimeBeforeDraw()
-  {
-    return <fieldset><Range
-        id="time-before-draw"
-        label="time before draw"
-        handler={this.props.timeBeforeDraw.handler}
-        value={{
-          min: 100,
-          max: 9900,
-          step: 100,
-          default: 1000,
-          display: (this.props.timeBeforeDraw.value/1000).toFixed(1)+"s",
-        }} /></fieldset>;
-  }
-  renderTimeBeforeSort()
-  {
-    return <fieldset><Range
-        id="time-before-sort"
-        label="time before sort"
-        handler={this.props.timeBeforeSort.handler}
-        value={{
-          min: 0,
-          max: 9900,
-          step: 100,
-          default: 500,
-          display: (this.props.timeBeforeSort.value/1000).toFixed(1)+"s",
-        }} /></fieldset>
-  }
-  renderTimeOfGame()
-  {
-    return <fieldset><Range
-        id="time-of-game"
-        label="time of game"
-        handler={this.props.timeOfGame.handler}
-        value={{
-          min: 30000,
-          max: 600000,
-          step: 1000,
-          default: 60000,
-          display: <>{formatDigits(this.props.timeOfGame.value/1000, 3)}s</>,
-        }}
-    /></fieldset>;
-  }
   render()
   {
     return <form className="controls">
-        {this.renderHuButton()}
-        {this.renderStatus()}
-        {this.renderStartButton()}
-        {this.renderHandLength()}
-        {this.renderTileStyle()}
-        {this.renderTileSuit()}
-        {this.renderAllowPairs()}
-        {this.renderTimeBeforeDraw()}
-        {this.renderTimeBeforeSort()}
-        {this.renderTimeOfGame()}
+        {this.props.children}
     </form>;
   }
 }
-type RadiosProps =
+class LabeledRadios<D, V extends string | number | string[]> extends React.Component<{
+  choices: Array<{display: D, value: V}>,
+  name: string,
+  labelText: string,
+  handler: Handler,
+  defaultValue: V,
+}>
 {
-  choices: Array<any>,
+  render()
+  {
+    return <fieldset className={this.props.name}>
+        <span className="radio-label">{this.props.labelText}</span>
+        <Radios choices={this.props.choices}
+          name={this.props.name}
+          defaultValue={this.props.defaultValue}
+          onChange={this.props.handler} />
+        </fieldset>;
+  }
+}
+class Radios<D, V extends string | number | string[]> extends React.Component<{
+  choices: Array<{display: D, value: V}>,
   name: string,
   onChange: Handler,
-  defaultValue: any,
-};
-class Radios extends React.Component<RadiosProps>
+  defaultValue: V,
+}>
 {
   render()
   {
@@ -486,15 +521,13 @@ class Radios extends React.Component<RadiosProps>
     />)}</>;
   }
 }
-type RadioProps =
-{
+class Radio<D, V extends string | number | string[]> extends React.Component<{
   name: string,
-  value: string,
+  value: V,
   onChange: Handler,
-  defaultValue: string,
-  display: string,
-};
-class Radio extends React.Component<RadioProps>
+  defaultValue: V,
+  display: D,
+}>
 {
   render()
   {
